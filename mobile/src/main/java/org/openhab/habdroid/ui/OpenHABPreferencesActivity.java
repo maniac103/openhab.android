@@ -209,7 +209,7 @@ public class OpenHABPreferencesActivity extends AppCompatActivity {
             intent.putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true);
             intent.putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, true);
             intent.putExtra(RingtoneManager.EXTRA_RINGTONE_DEFAULT_URI,
-                    Settings.System.DEFAULT_RINGTONE_URI);
+                    Settings.System.DEFAULT_NOTIFICATION_URI);
 
             String existingValue = getPreferenceString(pref, null);
             if (existingValue != null) {
@@ -221,7 +221,8 @@ public class OpenHABPreferencesActivity extends AppCompatActivity {
                 }
             } else {
                 // No ringtone has been selected, set to the default
-                intent.putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, Settings.System.DEFAULT_RINGTONE_URI);
+                intent.putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI,
+                        Settings.System.DEFAULT_NOTIFICATION_URI);
             }
 
             startActivityForResult(intent, REQUEST_CODE_RINGTONE_PICKER);
