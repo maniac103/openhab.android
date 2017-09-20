@@ -11,8 +11,9 @@ package org.openhab.habdroid.util;
 
 import android.app.Activity;
 import android.content.Context;
-import android.preference.PreferenceManager;
+import android.content.SharedPreferences;
 import android.support.annotation.NonNull;
+import android.support.v7.preference.PreferenceManager;
 import android.util.Log;
 
 import com.crittercism.app.Crittercism;
@@ -40,9 +41,14 @@ public class Util {
 
     private final static String TAG = Util.class.getSimpleName();
 
+    public static SharedPreferences getPrefs(Context context) {
+        return PreferenceManager.getDefaultSharedPreferences(context);
+    }
+
     public static void overridePendingTransition(Activity activity, boolean reverse) {
-        if (!PreferenceManager.getDefaultSharedPreferences(activity).getString(Constants.PREFERENCE_ANIMATION, "android").equals("android")) {
-            if (PreferenceManager.getDefaultSharedPreferences(activity).getString(Constants.PREFERENCE_ANIMATION, "android").equals("ios")) {
+        SharedPreferences prefs = getPrefs(activity);
+        if (!prefs.getString(Constants.PREFERENCE_ANIMATION, "android").equals("android")) {
+            if (prefs.getString(Constants.PREFERENCE_ANIMATION, "android").equals("ios")) {
                 if (reverse) {
                     activity.overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
                 } else {
@@ -134,7 +140,7 @@ public class Util {
     }
 
     public static void setActivityTheme(@NonNull final Activity activity) {
-        final String theme = PreferenceManager.getDefaultSharedPreferences(activity).getString(Constants.PREFERENCE_THEME, activity.getString(R.string.theme_value_dark));
+        final String theme = getPrefs(activity).getString(Constants.PREFERENCE_THEME, activity.getString(R.string.theme_value_dark));
         int themeRes;
         if (theme.equals(activity.getString(R.string.theme_value_light))) {
             themeRes = R.style.HABDroid_Light;

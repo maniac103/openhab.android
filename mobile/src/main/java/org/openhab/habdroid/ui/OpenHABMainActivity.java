@@ -27,7 +27,6 @@ import android.nfc.NfcAdapter;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.speech.RecognizerIntent;
 import android.support.v4.app.Fragment;
@@ -37,6 +36,7 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
@@ -222,7 +222,7 @@ public class OpenHABMainActivity extends AppCompatActivity implements OnWidgetSe
         checkVoiceRecognition();
 
         // Set the theme to one from preferences
-        mSettings = PreferenceManager.getDefaultSharedPreferences(this);
+        mSettings = Util.getPrefs(this);
 
         // initialize loopj async http client
         mAsyncHttpClient = new MyAsyncHttpClient(this, mSettings.getBoolean(Constants.PREFERENCE_SSLHOST,
@@ -645,8 +645,7 @@ public class OpenHABMainActivity extends AppCompatActivity implements OnWidgetSe
                     showSitemapSelectionDialog(mSitemapList);
                 } else {
                     // Check if we have a sitemap configured to use
-                    SharedPreferences settings =
-                            PreferenceManager.getDefaultSharedPreferences(OpenHABMainActivity.this);
+                    SharedPreferences settings = Util.getPrefs(OpenHABMainActivity.this);
                     String configuredSitemap = settings.getString(Constants.PREFERENCE_SITEMAP, "");
                     // If we have sitemap configured
                     if (configuredSitemap.length() > 0) {
@@ -702,8 +701,7 @@ public class OpenHABMainActivity extends AppCompatActivity implements OnWidgetSe
                     new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int item) {
                             Log.d(TAG, "Selected sitemap " + sitemapNameList.get(item));
-                            SharedPreferences settings =
-                                    PreferenceManager.getDefaultSharedPreferences(OpenHABMainActivity.this);
+                            SharedPreferences settings = Util.getPrefs(OpenHABMainActivity.this);
                             SharedPreferences.Editor preferencesEditor = settings.edit();
                             preferencesEditor.putString(Constants.PREFERENCE_SITEMAP, sitemapList.get(item).getName());
                             preferencesEditor.commit();
@@ -793,8 +791,7 @@ public class OpenHABMainActivity extends AppCompatActivity implements OnWidgetSe
                 Util.overridePendingTransition(this, false);
                 return true;
             case R.id.mainmenu_openhab_selectsitemap:
-                SharedPreferences settings =
-                        PreferenceManager.getDefaultSharedPreferences(OpenHABMainActivity.this);
+                SharedPreferences settings = Util.getPrefs(OpenHABMainActivity.this);
                 SharedPreferences.Editor preferencesEditor = settings.edit();
                 preferencesEditor.putString(Constants.PREFERENCE_SITEMAP, "");
                 preferencesEditor.commit();
@@ -1222,7 +1219,7 @@ public class OpenHABMainActivity extends AppCompatActivity implements OnWidgetSe
                 Log.d(TAG, "Could not parse the baseURL to an URL: " + ex.getMessage());
                 return null;
             }
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            SharedPreferences prefs = Util.getPrefs(this);
             MySyncHttpClient syncHttpClient = new MySyncHttpClient(this,
                     prefs.getBoolean(Constants.PREFERENCE_SSLHOST, false),
                     prefs.getBoolean(Constants.PREFERENCE_SSLCERT, false));

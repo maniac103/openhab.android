@@ -1,9 +1,10 @@
 package org.openhab.habdroid.ui.widget;
 
-import android.app.AlertDialog;
 import android.content.Context;
 import android.os.Bundle;
-import android.preference.EditTextPreference;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.preference.EditTextPreference;
+import android.support.v7.preference.EditTextPreferenceDialogFragmentCompat;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -17,10 +18,7 @@ import org.openhab.habdroid.R;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-public class URLInputPreference extends EditTextPreference implements TextWatcher {
-    private EditText mEditor;
-    private boolean mUrlIsValid;
-
+public class URLInputPreference extends EditTextPreference {
     public URLInputPreference(Context context) {
         super(context);
     }
@@ -33,54 +31,68 @@ public class URLInputPreference extends EditTextPreference implements TextWatche
         super(context, attrs, defStyleAttr);
     }
 
-    @Override
-    protected void onAddEditTextToDialogView(View dialogView, EditText editText) {
-        super.onAddEditTextToDialogView(dialogView, editText);
-        mEditor = editText;
-        editText.addTextChangedListener(this);
-    }
+    public static class URLInputFragment extends EditTextPreferenceDialogFragmentCompat
+            implements TextWatcher {
+        private EditText mEditor;
+        private boolean mUrlIsValid;
 
-    @Override
-    protected void showDialog(Bundle state) {
-        super.showDialog(state);
-        updateOkButtonState();
-    }
+        public static URLInputFragment newInstance(String key) {
+            final URLInputFragment fragment = new URLInputFragment();
+            final Bundle b = new Bundle(1);
+            b.putString(ARG_KEY, key);
+            fragment.setArguments(b);
+            return fragment;
+        }
 
-    @Override
-    public void beforeTextChanged(CharSequence charSequence, int start, int before, int count) {
-    }
+        @Override
+        protected void onBindDialogView(View view) {
+            super.onBindDialogView(view);
+            mEditor = (EditText) view.findViewById(android.R.id.edit);
+            mEditor.addTextChangedListener(this);
+        }
 
-    @Override
-    public void onTextChanged(CharSequence charSequence, int start, int before, int count) {
-    }
+        @Override
+        public void onStart() {
+            super.onStart();
+            updateOkButtonState();
+        }
 
-    @Override
-    public void afterTextChanged(Editable editable) {
-        if (TextUtils.isEmpty(editable)) {
-            mUrlIsValid = true;
-        } else {
-            String url = editable.toString();
-            if (url.contains("\n") || url.contains(" ")) {
-                mUrlIsValid = false;
+        @Override
+        public void beforeTextChanged(CharSequence charSequence, int start, int before, int count) {
+        }
+
+        @Override
+        public void onTextChanged(CharSequence charSequence, int start, int before, int count) {
+        }
+
+        @Override
+        public void afterTextChanged(Editable editable) {
+            if (TextUtils.isEmpty(editable)) {
+                mUrlIsValid = true;
             } else {
-                try {
-                    new URL(url);
-                    mUrlIsValid = true;
-                } catch (MalformedURLException e) {
+                String url = editable.toString();
+                if (url.contains("\n") || url.contains(" ")) {
                     mUrlIsValid = false;
+                } else {
+                    try {
+                        new URL(url);
+                        mUrlIsValid = true;
+                    } catch (MalformedURLException e) {
+                        mUrlIsValid = false;
+                    }
                 }
             }
+            mEditor.setError(mUrlIsValid ? null : mEditor.getResources().getString(R.string.erorr_invalid_url));
+            updateOkButtonState();
         }
-        mEditor.setError(mUrlIsValid ? null : mEditor.getResources().getString(R.string.erorr_invalid_url));
-        updateOkButtonState();
-    }
 
-    private void updateOkButtonState() {
-        if (getDialog() instanceof AlertDialog) {
-            AlertDialog dialog = (AlertDialog) getDialog();
-            Button okButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-            if (okButton != null) {
-                okButton.setEnabled(mUrlIsValid);
+        private void updateOkButtonState() {
+            if (getDialog() instanceof AlertDialog) {
+                AlertDialog dialog = (AlertDialog) getDialog();
+                Button okButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+                if (okButton != null) {
+                    okButton.setEnabled(mUrlIsValid);
+                }
             }
         }
     }

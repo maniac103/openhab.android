@@ -14,7 +14,6 @@ import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
 import org.openhab.habdroid.R;
@@ -71,7 +70,7 @@ public class OpenHABTracker implements AsyncServiceResolverListener {
 
     public void start() {
         // Get preferences
-        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(mCtx);
+        SharedPreferences settings = Util.getPrefs(mCtx);
 //        mCtx.registerReceiver(mConnectivityChangeReceiver,
 //                new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
         // If demo mode is on, just go for demo server base URL ignoring other settings
@@ -154,7 +153,7 @@ public class OpenHABTracker implements AsyncServiceResolverListener {
     public void onServiceResolveFailed() {
         bonjourDiscoveryFinished();
         Log.i(TAG, "Service resolve failed, switching to remote URL");
-        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(mCtx);
+        SharedPreferences settings = Util.getPrefs(mCtx);
         mOpenHABUrl = Util.normalizeUrl(settings.getString(Constants.PREFERENCE_ALTURL, ""));
         // If remote URL is configured
         if (mOpenHABUrl.length() > 0) {

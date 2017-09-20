@@ -17,6 +17,9 @@
 
         <item name="themedDrawerBackground">?android:colorBackground</item>
         <item name="themedHeaderTextColor">@color/colorAccent_themeDark</item>
+        <item name="preferenceTheme">@style/PreferenceTheme</item>
     </style>
+
+    <style name="PreferenceTheme" parent="PreferenceThemeOverlay.v14.Material" />
 
 </resources>

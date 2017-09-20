@@ -16,7 +16,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
-import android.preference.PreferenceManager;
 import android.support.v4.app.ListFragment;
 import android.text.TextUtils;
 import android.util.Log;
@@ -127,7 +126,7 @@ public class OpenHABWidgetListFragment extends ListFragment {
         Log.d(TAG, "onActivityCreated()");
         Log.d(TAG, "isAdded = " + isAdded());
         mActivity = (OpenHABMainActivity)getActivity();
-        final String iconFormat = PreferenceManager.getDefaultSharedPreferences(mActivity).getString("iconFormatType","PNG");
+        final String iconFormat = Util.getPrefs(mActivity).getString("iconFormatType","PNG");
         openHABWidgetDataSource = new OpenHABWidgetDataSource(iconFormat);
         openHABWidgetAdapter = new OpenHABWidgetAdapter(getActivity(),
                 R.layout.openhabwidgetlist_genericitem, widgetList);
@@ -136,8 +135,7 @@ public class OpenHABWidgetListFragment extends ListFragment {
         openHABUsername = mActivity.getOpenHABUsername();
         openHABPassword = mActivity.getOpenHABPassword();
         // We're using atmosphere so create an own client to not block the others
-        SharedPreferences prefs = PreferenceManager
-                .getDefaultSharedPreferences(mActivity);
+        SharedPreferences prefs = Util.getPrefs(mActivity);
         mAsyncHttpClient = new MyAsyncHttpClient(mActivity, prefs.getBoolean(Constants.PREFERENCE_SSLHOST,
                         false), prefs.getBoolean(Constants.PREFERENCE_SSLCERT, false));
         mAsyncHttpClient.setBasicAuth(openHABUsername, openHABPassword);

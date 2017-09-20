@@ -16,7 +16,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.caverock.androidsvg.SVG;
@@ -69,7 +68,7 @@ public class MyWebImage implements SmartImage {
             	bitmap = webImageCache.get(url);
             if(bitmap == null) {
             	Log.i("MyWebImage", "Cache for " + url + " is empty, getting image");
-                final String iconFormat = PreferenceManager.getDefaultSharedPreferences(context).getString("iconFormatType","PNG");
+                final String iconFormat = Util.getPrefs(context).getString("iconFormatType","PNG");
                 bitmap = getBitmapFromUrl(context, url, iconFormat);
                 if(bitmap != null && this.useCache) {
                     webImageCache.put(url, bitmap);
@@ -82,7 +81,7 @@ public class MyWebImage implements SmartImage {
 
     private Bitmap getBitmapFromUrl(Context context, final String url, final String iconFormat) {
         final Map<String, Object> result = new HashMap<String, Object>();
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences prefs = Util.getPrefs(context);
         MyAsyncHttpClient client = new MyAsyncHttpClient(context, prefs.getBoolean(Constants
                 .PREFERENCE_SSLHOST, false), prefs.getBoolean(Constants.PREFERENCE_SSLCERT, false));
         client.setTimeout(READ_TIMEOUT);

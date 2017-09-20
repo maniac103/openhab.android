@@ -13,7 +13,6 @@ package org.openhab.habdroid.ui;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.http.SslError;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebView;
@@ -21,6 +20,7 @@ import android.webkit.WebViewClient;
 import android.webkit.HttpAuthHandler;
 
 import org.openhab.habdroid.util.Constants;
+import org.openhab.habdroid.util.Util;
 
 class AnchorWebViewClient extends WebViewClient {
     private static final String TAG = AnchorWebViewClient.class.getSimpleName();
@@ -55,9 +55,7 @@ class AnchorWebViewClient extends WebViewClient {
 
     @Override
     public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
-        Context mCtx = view.getContext();
-        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(mCtx);
-        if (settings.getBoolean(Constants.PREFERENCE_SSLCERT, false)) {
+        if (Util.getPrefs(view.getContext()).getBoolean(Constants.PREFERENCE_SSLCERT, false)) {
             handler.proceed();
         }
     }

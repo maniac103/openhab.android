@@ -10,20 +10,22 @@
 package org.openhab.habdroid.ui;
 
 import android.content.Intent;
+import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.Preference;
-import android.preference.Preference.OnPreferenceChangeListener;
-import android.preference.PreferenceFragment;
+import android.provider.Settings;
 import android.security.KeyChain;
 import android.security.KeyChainAliasCallback;
 import android.security.KeyChainException;
 import android.security.keystore.KeyProperties;
-import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.preference.Preference;
+import android.support.v7.preference.PreferenceFragmentCompat;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 
@@ -33,6 +35,7 @@ import com.google.android.gms.analytics.GoogleAnalytics;
 
 import org.openhab.habdroid.BuildConfig;
 import org.openhab.habdroid.R;
+import org.openhab.habdroid.ui.widget.URLInputPreference;
 import org.openhab.habdroid.util.Constants;
 import org.openhab.habdroid.util.Util;
 
@@ -67,7 +70,7 @@ public class OpenHABPreferencesActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         if (savedInstanceState == null) {
-            getFragmentManager()
+            getSupportFragmentManager()
                     .beginTransaction()
                     .add(R.id.prefs_container, new SettingsFragment())
                     .commit();
@@ -91,11 +94,11 @@ public class OpenHABPreferencesActivity extends AppCompatActivity {
         Util.overridePendingTransition(this, true);
     }
 
-    public static class SettingsFragment extends PreferenceFragment {
-        @Override
-        public void onCreate(@Nullable Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
+    public static class SettingsFragment extends PreferenceFragmentCompat {
+        private static final int REQUEST_CODE_RINGTONE_PICKER = 1000;
 
+        @Override
+        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             addPreferencesFromResource(R.xml.preferences);
 
             initEditorPreference(Constants.PREFERENCE_URL, R.string.settings_openhab_url_summary, false);
@@ -163,6 +166,67 @@ public class OpenHABPreferencesActivity extends AppCompatActivity {
             }
         }
 
+        @Override
+        public boolean onPreferenceTreeClick(Preference preference) {
+            if (Constants.PREFERENCE_TONE.equals(preference.getKey())) {
+                openRingtonePicker(preference);
+                return true;
+            }
+            return super.onPreferenceTreeClick(preference);
+        }
+
+        @Override
+        public void onDisplayPreferenceDialog(Preference preference) {
+            if (preference instanceof URLInputPreference) {
+                DialogFragment f = URLInputPreference.URLInputFragment.newInstance(preference.getKey());
+                f.setTargetFragment(this, 0);
+
+                FragmentManager fm = getFragmentManager();
+                if (fm.findFragmentByTag("url_dialog") == null) {
+                    f.show(getFragmentManager(), "url_dialog");
+                }
+            } else {
+                super.onDisplayPreferenceDialog(preference);
+            }
+        }
+
+        @Override
+        public void onActivityResult(int requestCode, int resultCode, Intent data) {
+            if (requestCode == REQUEST_CODE_RINGTONE_PICKER && data != null) {
+                Uri tone = data.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI);
+                String value = tone != null ? tone.toString() : "";
+                Preference pref = findPreference(Constants.PREFERENCE_TONE);
+                pref.getSharedPreferences().edit().putString(pref.getKey(), value).apply();
+            } else {
+                super.onActivityResult(requestCode, resultCode, data);
+            }
+        }
+
+        private void openRingtonePicker(Preference pref) {
+            Intent intent = new Intent(RingtoneManager.ACTION_RINGTONE_PICKER);
+            intent.putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE,
+                    RingtoneManager.TYPE_RINGTONE | RingtoneManager.TYPE_NOTIFICATION);
+            intent.putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true);
+            intent.putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, true);
+            intent.putExtra(RingtoneManager.EXTRA_RINGTONE_DEFAULT_URI,
+                    Settings.System.DEFAULT_RINGTONE_URI);
+
+            String existingValue = getPreferenceString(pref, null);
+            if (existingValue != null) {
+                if (existingValue.isEmpty()) {
+                    // Select "Silent"
+                    intent.putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, (Uri) null);
+                } else {
+                    intent.putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, Uri.parse(existingValue));
+                }
+            } else {
+                // No ringtone has been selected, set to the default
+                intent.putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, Settings.System.DEFAULT_RINGTONE_URI);
+            }
+
+            startActivityForResult(intent, REQUEST_CODE_RINGTONE_PICKER);
+        }
+
         private String getPreferenceString(Preference preference, String defValue) {
             return preference.getSharedPreferences().getString(preference.getKey(), defValue);
         }
@@ -185,7 +249,7 @@ public class OpenHABPreferencesActivity extends AppCompatActivity {
         private void initEditorPreference(String key, @StringRes final int summaryFormatResId,
                                           final boolean isPassword) {
             Preference pref = getPreferenceScreen().findPreference(key);
-            pref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+            pref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
                     updateTextPreferenceSummary(preference, summaryFormatResId, (String) newValue, isPassword);

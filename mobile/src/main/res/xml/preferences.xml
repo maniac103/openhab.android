@@ -84,12 +84,9 @@
             android:entryValues="@array/iconTypeValues" />
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/settings_misc_title">
-        <RingtonePreference
+        <Preference
             android:key="default_openhab_alertringtone"
-            android:persistent="true"
-            android:ringtoneType="ringtone|notification"
-            android:showSilent="true"
-            android:title="@string/settings_ringtone"></RingtonePreference>
+            android:title="@string/settings_ringtone" />
         <EditTextPreference
             android:enabled="false"
             android:key="default_openhab_appversion"

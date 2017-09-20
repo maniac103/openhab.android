@@ -13,7 +13,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
-import android.preference.PreferenceManager;
 import android.speech.RecognizerIntent;
 import android.util.Log;
 import android.widget.Toast;
@@ -23,6 +22,7 @@ import org.openhab.habdroid.util.Constants;
 import org.openhab.habdroid.util.ContinuingIntentService;
 import org.openhab.habdroid.util.MyAsyncHttpClient;
 import org.openhab.habdroid.util.MyHttpClient;
+import org.openhab.habdroid.util.Util;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -63,10 +63,9 @@ public class OpenHABVoiceService extends ContinuingIntentService implements Open
     }
 
     private void initHttpClient() {
-        SharedPreferences mSettings = PreferenceManager.getDefaultSharedPreferences(this);
-        String username = mSettings.getString(Constants.PREFERENCE_USERNAME, null);
-        String password = mSettings.getString(Constants.PREFERENCE_PASSWORD, null);
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences prefs = Util.getPrefs(this);
+        String username = prefs.getString(Constants.PREFERENCE_USERNAME, null);
+        String password = prefs.getString(Constants.PREFERENCE_PASSWORD, null);
         mAsyncHttpClient = new MyAsyncHttpClient(this, prefs.getBoolean(Constants.PREFERENCE_SSLHOST,
                 false), prefs.getBoolean(Constants.PREFERENCE_SSLCERT, false));
         mAsyncHttpClient.setBasicAuth(username, password);

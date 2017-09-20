@@ -20,7 +20,6 @@ import javax.net.ssl.X509KeyManager;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 import android.security.KeyChain;
 import android.security.KeyChainException;
 import android.util.Log;
@@ -38,7 +37,7 @@ class MyKeyManager implements X509KeyManager {
 
     private MyKeyManager(final Context ctx) {
 
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(ctx);
+        SharedPreferences preferences = Util.getPrefs(ctx);
         final String preferencesAlias = preferences.getString(Constants.PREFERENCE_SSLCLIENTCERT, null);
 
         if (preferencesAlias == null) {
