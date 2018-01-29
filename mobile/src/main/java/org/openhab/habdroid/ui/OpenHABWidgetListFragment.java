@@ -35,6 +35,7 @@ import org.json.JSONObject;
 import org.openhab.habdroid.R;
 import org.openhab.habdroid.core.OpenHABTrackerReceiver;
 import org.openhab.habdroid.model.OpenHABItem;
+import org.openhab.habdroid.model.OpenHABLinkedPage;
 import org.openhab.habdroid.model.OpenHABNFCActionList;
 import org.openhab.habdroid.model.OpenHABWidget;
 import org.openhab.habdroid.model.OpenHABWidgetDataSource;
@@ -81,8 +82,6 @@ public class OpenHABWidgetListFragment extends Fragment
     // Url of current sitemap page displayed
     // Url of current sitemap page displayed
     private String displayPageUrl;
-    // sitemap root url
-    private String sitemapRootUrl = "";
     // openHAB base url
     private String openHABBaseUrl = "http://demo.openhab.org:8080/";
     // Username/password for authentication
@@ -102,7 +101,6 @@ public class OpenHABWidgetListFragment extends Fragment
     private MyAsyncHttpClient mAsyncHttpClient;
     // Am I visible?
     private boolean mIsVisible = false;
-    private int mPosition;
     private String mTitle;
     private String mAtmosphereTrackingId;
     //handlers will reconnect the network during outages
@@ -121,10 +119,8 @@ public class OpenHABWidgetListFragment extends Fragment
         if (getArguments() != null) {
             displayPageUrl = getArguments().getString("displayPageUrl");
             openHABBaseUrl = getArguments().getString("openHABBaseUrl");
-            sitemapRootUrl = getArguments().getString("sitemapRootUrl");
             openHABUsername = getArguments().getString("openHABUsername");
             openHABPassword = getArguments().getString("openHABPassword");
-            mPosition = getArguments().getInt("position");
             mTitle = getArguments().getString("title");
         }
         if (savedInstanceState != null) {
@@ -152,12 +148,8 @@ public class OpenHABWidgetListFragment extends Fragment
         mAsyncHttpClient.setBasicAuth(openHABUsername, openHABPassword);
 
         openHABWidgetAdapter = new OpenHABWidgetAdapter(getActivity(), mAsyncHttpClient,
-                openHABBaseUrl, openHABUsername, openHABPassword, this,
-                getResources().getInteger(R.integer.pager_columns) > 1);
+                openHABBaseUrl, openHABUsername, openHABPassword, this);
 
-        if (savedInstanceState != null) {
-            openHABWidgetAdapter.setSelectedPosition(savedInstanceState.getInt("selection", -1));
-        }
         mLayoutManager = new LinearLayoutManager(mActivity);
         mLayoutManager.setRecycleChildrenOnDetach(true);
 
@@ -200,7 +192,6 @@ public class OpenHABWidgetListFragment extends Fragment
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putString("title", mTitle);
-        outState.putInt("selection", openHABWidgetAdapter.getSelectedPosition());
     }
 
     @Override
@@ -326,19 +317,34 @@ public class OpenHABWidgetListFragment extends Fragment
     }
 
     public static OpenHABWidgetListFragment withPage(String pageUrl, String pageTitle,
-            String baseUrl, String rootUrl, String username, String password, int position) {
+            String baseUrl, String username, String password) {
         Log.d(TAG, "withPage(" + pageUrl + ")");
         OpenHABWidgetListFragment fragment = new OpenHABWidgetListFragment();
         Bundle args = new Bundle();
         args.putString("displayPageUrl", pageUrl);
         args.putString("openHABBaseUrl", baseUrl);
-        args.putString("sitemapRootUrl", rootUrl);
         args.putString("openHABUsername", username);
         args.putString("openHABPassword", password);
         args.putString("title", pageTitle);
-        args.putInt("position", position);
         fragment.setArguments(args);
         return fragment;
+    }
+
+    public void setHighlightedPageLink(String highlightedPageLink) {
+        getArguments().putString("highlightedPageLink", highlightedPageLink);
+        if (openHABWidgetAdapter == null) {
+            return;
+        }
+        openHABWidgetAdapter.setSelectedPosition(-1);
+        if (highlightedPageLink != null) {
+            for (int i = 0; i < openHABWidgetAdapter.getItemCount(); i++) {
+                OpenHABLinkedPage page = openHABWidgetAdapter.getItem(i).getLinkedPage();
+                if (page != null && highlightedPageLink.equals(page.getLink())) {
+                    openHABWidgetAdapter.setSelectedPosition(i);
+                    break;
+                }
+            }
+        }
     }
 
     /**
@@ -501,6 +507,8 @@ public class OpenHABWidgetListFragment extends Fragment
         }
 
         openHABWidgetAdapter.update(widgetList);
+        setHighlightedPageLink(getArguments().getString("highlightedPageLink"));
+
         mTitle = openHABWidgetDataSource.getTitle();
         if (mActivity != null && mIsVisible) {
             mActivity.updateTitle();
@@ -564,7 +572,10 @@ public class OpenHABWidgetListFragment extends Fragment
     }
 
     public String getTitle() {
-        return mTitle;
+        if (mTitle != null) {
+            return mTitle;
+        }
+        return getArguments().getString("title");
     }
 
     public void clearSelection() {
@@ -573,10 +584,6 @@ public class OpenHABWidgetListFragment extends Fragment
         if (openHABWidgetAdapter != null) {
             openHABWidgetAdapter.setSelectedPosition(-1);
         }
-    }
-
-    public int getPosition() {
-        return mPosition;
     }
 
     private void stopVisibleViewHolders() {

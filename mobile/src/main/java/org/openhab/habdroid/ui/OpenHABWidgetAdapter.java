@@ -104,11 +104,10 @@ public class OpenHABWidgetAdapter extends RecyclerView.Adapter<OpenHABWidgetAdap
     private @ColorInt int mPrimaryForegroundColor;
     private String mChartTheme;
     private int mSelectedPosition = -1;
-    private final boolean mSelectionEnabled;
 
     public OpenHABWidgetAdapter(Context context, MyAsyncHttpClient httpClient,
             String openHABBaseUrl, String openHABUsername, String openHABPassword,
-            ItemClickListener itemClickListener, boolean selectionEnabled) {
+            ItemClickListener itemClickListener) {
         super();
 
         mInflater = LayoutInflater.from(context);
@@ -116,7 +115,6 @@ public class OpenHABWidgetAdapter extends RecyclerView.Adapter<OpenHABWidgetAdap
         mAsyncHttpClient = httpClient;
         mConnection = new ConnectionInfo(openHABBaseUrl, openHABUsername, openHABPassword);
         mItemClickListener = itemClickListener;
-        mSelectionEnabled = selectionEnabled;
 
         TypedArray a = context.obtainStyledAttributes(new int[] {
             R.attr.colorControlNormal,
@@ -202,7 +200,7 @@ public class OpenHABWidgetAdapter extends RecyclerView.Adapter<OpenHABWidgetAdap
     public void onBindViewHolder(ViewHolder holder, int position) {
         holder.stop();
         holder.bind(mItems.get(position));
-        holder.itemView.setActivated(mSelectedPosition == position && mSelectionEnabled);
+        holder.itemView.setActivated(mSelectedPosition == position);
         holder.itemView.setOnClickListener(mItemClickListener != null ? this : null);
         holder.itemView.setOnLongClickListener(mItemClickListener != null ? this : null);
         holder.itemView.setClickable(mItemClickListener != null);
@@ -223,6 +221,10 @@ public class OpenHABWidgetAdapter extends RecyclerView.Adapter<OpenHABWidgetAdap
     @Override
     public int getItemCount() {
         return mItems.size();
+    }
+
+    public OpenHABWidget getItem(int position) {
+        return mItems.get(position);
     }
 
     @Override

@@ -9,6 +9,9 @@
 
 package org.openhab.habdroid.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.w3c.dom.Node;
@@ -18,7 +21,7 @@ import org.w3c.dom.NodeList;
  * This is a class to hold information about openHAB linked page.
  */
 
-public class OpenHABLinkedPage {
+public class OpenHABLinkedPage implements Parcelable {
 	private String id;
 	private String title;
 	private String icon;
@@ -58,6 +61,13 @@ public class OpenHABLinkedPage {
         }
     }
 
+    public OpenHABLinkedPage(Parcel p) {
+		id = p.readString();
+		title = p.readString();
+		icon = p.readString();
+		link = p.readString();
+	}
+
 	public String getId() {
 		return id;
 	}
@@ -96,5 +106,29 @@ public class OpenHABLinkedPage {
 	public static String getTag() {
 		return TAG;
 	}
-	
+
+	@Override
+	public int describeContents() {
+		return 0;
+	}
+
+	@Override
+	public void writeToParcel(Parcel parcel, int flags) {
+		parcel.writeString(id);
+		parcel.writeString(title);
+		parcel.writeString(icon);
+		parcel.writeString(link);
+	}
+
+	public static Parcelable.Creator<OpenHABLinkedPage> CREATOR = new Parcelable.Creator<OpenHABLinkedPage>() {
+		@Override
+		public OpenHABLinkedPage createFromParcel(Parcel parcel) {
+			return new OpenHABLinkedPage(parcel);
+		}
+
+		@Override
+		public OpenHABLinkedPage[] newArray(int size) {
+			return new OpenHABLinkedPage[size];
+		}
+	};
 }
