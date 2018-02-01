@@ -15,7 +15,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.Bundle;
-import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
@@ -23,45 +22,22 @@ import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.openhab.habdroid.R;
 import org.openhab.habdroid.core.OpenHABTrackerReceiver;
-import org.openhab.habdroid.model.OpenHABItem;
 import org.openhab.habdroid.model.OpenHABLinkedPage;
 import org.openhab.habdroid.model.OpenHABNFCActionList;
 import org.openhab.habdroid.model.OpenHABWidget;
-import org.openhab.habdroid.model.OpenHABWidgetDataSource;
 import org.openhab.habdroid.util.Constants;
 import org.openhab.habdroid.util.MyAsyncHttpClient;
-import org.openhab.habdroid.util.MyHttpClient;
 import org.openhab.habdroid.util.Util;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.net.SocketTimeoutException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
-import okhttp3.Call;
-import okhttp3.Headers;
 
 import static org.openhab.habdroid.util.Constants.PREFERENCE_SWIPE_REFRESH_EXPLAINED;
 
@@ -73,8 +49,6 @@ import static org.openhab.habdroid.util.Constants.PREFERENCE_SWIPE_REFRESH_EXPLA
 public class OpenHABWidgetListFragment extends Fragment
         implements OpenHABWidgetAdapter.ItemClickListener {
     private static final String TAG = OpenHABWidgetListFragment.class.getSimpleName();
-    // Datasource, providing list of openHAB widgets
-    private OpenHABWidgetDataSource openHABWidgetDataSource;
     // List adapter for list view of openHAB widgets
     private OpenHABWidgetAdapter openHABWidgetAdapter;
     private RecyclerView mRecyclerView;
@@ -89,12 +63,6 @@ public class OpenHABWidgetListFragment extends Fragment
     private String openHABPassword = "";
     // selected openhab widget
     private OpenHABWidget selectedOpenHABWidget;
-    // widget Id which we got from nfc tag
-    private String nfcWidgetId;
-    // widget command which we got from nfc tag
-    private String nfcCommand;
-    // auto close app after nfc action is complete
-    private boolean nfcAutoClose = false;
     // parent activity
     private OpenHABMainActivity mActivity;
     // loopj
@@ -103,11 +71,7 @@ public class OpenHABWidgetListFragment extends Fragment
     private boolean mIsVisible = false;
     private String mTitle;
     private String mAtmosphereTrackingId;
-    //handlers will reconnect the network during outages
-    private Handler networkHandler = new Handler();
-    private Runnable networkRunnable;
     // keeps track of current request to cancel it in onPause
-    private Call mRequestHandle;
     private SwipeRefreshLayout refreshLayout;
 
     @Override
@@ -135,7 +99,6 @@ public class OpenHABWidgetListFragment extends Fragment
         Log.d(TAG, "isAdded = " + isAdded());
         mActivity = (OpenHABMainActivity) getActivity();
         final String iconFormat = getIconFormat();
-        openHABWidgetDataSource = new OpenHABWidgetDataSource(iconFormat);
 
         // We're using atmosphere so create an own client to not block the others
         SharedPreferences prefs = PreferenceManager
@@ -181,7 +144,7 @@ public class OpenHABWidgetListFragment extends Fragment
                     showSwipeToRefreshDescriptionSnackbar((OpenHABTrackerReceiver) getActivity());
                 }
                 if (displayPageUrl != null) {
-                    showPage(displayPageUrl, false);
+                    mActivity.triggerPageUpdate(displayPageUrl, true);
                 }
             }
         });
@@ -279,34 +242,33 @@ public class OpenHABWidgetListFragment extends Fragment
     }
 
     @Override
+    public void onDestroyView() {
+        Log.d(TAG, "onDestroyView");
+        super.onDestroyView();
+    }
+
+    @Override
+    public void onStart() {
+        Log.d(TAG, "onStart");
+        super.onStart();
+        startProgressIndicator();
+        mActivity.triggerPageUpdate(displayPageUrl, false);
+    }
+
+    @Override
+    public void onStop() {
+        Log.d(TAG, "onStop");
+        super.onStop();
+    }
+
+    @Override
     public void onPause () {
         super.onPause();
         Log.d(TAG, "onPause() " + displayPageUrl);
         Log.d(TAG, "isAdded = " + isAdded());
-        // We only have 1 request running per fragment so
-        // cancel it if we have it
-        Thread thread = new Thread(new Runnable(){
-            @Override
-            public void run(){
-                if (mRequestHandle != null) {
-                    mRequestHandle.cancel();
-                    mRequestHandle = null;
-                }
-            }
-        });
-        thread.start();
         if (openHABWidgetAdapter != null) {
             stopVisibleViewHolders();
         }
-    }
-
-    @Override
-    public void onResume () {
-        super.onResume();
-        Log.d(TAG, "onResume() " + displayPageUrl);
-        Log.d(TAG, "isAdded = " + isAdded());
-        if (displayPageUrl != null)
-            showPage(displayPageUrl, false);
     }
 
     @Override
@@ -348,206 +310,14 @@ public class OpenHABWidgetListFragment extends Fragment
         }
     }
 
-    /**
-     * Loads data from sitemap page URL and passes it to processContent
-     *
-     * @param  pageUrl  an absolute base URL of openHAB sitemap page
-     * @param  longPolling  enable long polling when loading page
-     * @return      void
-     */
-    public void showPage(String pageUrl, final boolean longPolling) {
-        Log.i(TAG, " showPage for " + pageUrl + " longPolling = " + longPolling);
-        Log.d(TAG, "isAdded = " + isAdded());
-        // Cancel any existing http request to openHAB (typically ongoing long poll)
-        if (mRequestHandle != null) {
-            mRequestHandle.cancel();
-            mRequestHandle = null;
-        }
-        if (!longPolling) {
-            startProgressIndicator();
-            this.mAtmosphereTrackingId = null;
-        }
-        Map<String, String> headers = new HashMap<String, String>();
-        if (mActivity.getOpenHABVersion() == 1) {
-            headers.put("Accept", "application/xml");
-        }
-        headers.put("X-Atmosphere-Framework", "1.0");
-        if (longPolling) {
-            mAsyncHttpClient.setTimeout(300000);
-            headers.put("X-Atmosphere-Transport", "long-polling");
-            if (this.mAtmosphereTrackingId == null) {
-                headers.put("X-Atmosphere-tracking-id", "0");
-            } else {
-                headers.put("X-Atmosphere-tracking-id", this.mAtmosphereTrackingId);
-            }
-        } else {
-            headers.put("X-Atmosphere-tracking-id", "0");
-            mAsyncHttpClient.setTimeout(10000);
-        }
-        mRequestHandle = mAsyncHttpClient.get(pageUrl, headers, new MyHttpClient.ResponseHandler() {
-                    @Override
-                    public void onFailure(Call call, int statusCode, Headers headers, byte[] responseBody, Throwable error) {
-                        if (call.isCanceled()) {
-                            Log.i(TAG, "Call canceled on failure - stop updating");
-                            return;
-                        }
-                        mAtmosphereTrackingId = null;
-                        if (!longPolling)
-                            stopProgressIndicator();
-                        if (error instanceof SocketTimeoutException) {
-                            Log.d(TAG, "Connection timeout, reconnecting");
-                            showPage(displayPageUrl, false);
-                            return;
-                        } else {
-                    /*
-                    * If we get a network error try connecting again, if the
-                    * fragment is paused, the runnable will be removed
-                    */
-                            Log.e(TAG, error.toString());
-                            Log.e(TAG, String.format("status code = %d", statusCode));
-                            Log.e(TAG, "Connection error = " + error.getClass().toString() + ", cycle aborted");
-
-//                            networkHandler.removeCallbacks(networkRunnable);
-//                            networkRunnable =  new Runnable(){
-//                                @Override
-//                                public void run(){
-                                    showPage(displayPageUrl, false);
-//                                }
-//                            };
-//                            networkHandler.postDelayed(networkRunnable, 10 * 1000);
-                        }
-                    }
-
-                    @Override
-                    public void onSuccess(Call call, int statusCode, Headers headers, byte[] responseBody) {
-                        if (call.isCanceled()) {
-                            Log.i(TAG, "Call canceled on success - stop updating");
-                            return;
-                        }
-                        String id = headers.get("X-Atmosphere-tracking-id");
-                        if (id != null) {
-                            Log.i(TAG, "Found atmosphere tracking id: " + id);
-                            OpenHABWidgetListFragment.this.mAtmosphereTrackingId = id;
-                        }
-                        if (!longPolling)
-                            stopProgressIndicator();
-                        String responseString = new String(responseBody);
-                        processContent(responseString, longPolling);
-                    }
-                });
-    }
-
-    /**
-     * Parse XML sitemap page and show it
-     *
-     *
-     * @return      void
-     */
-    public void processContent(String responseString, boolean longPolling) {
-
-        Log.d(TAG, "processContent() " + this.displayPageUrl);
-        Log.d(TAG, "isAdded = " + isAdded());
-        Log.d(TAG, "responseString.length() = " + (responseString != null ? responseString.length()  : -1));
-
-        // We can receive empty response, probably when no items was changed
-        // so we needn't process it
-        if (responseString == null || responseString.length() == 0) {
-            showPage(displayPageUrl, true);
-            return;
-        }
-
-        List<OpenHABWidget> widgetList = new ArrayList<>();
-
-        // If openHAB verion = 1 get page from XML
-        if (mActivity.getOpenHABVersion() == 1) {
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            try {
-                DocumentBuilder builder = dbf.newDocumentBuilder();
-                Document document = builder.parse(new InputSource(new StringReader(responseString)));
-                if (document != null) {
-                    Node rootNode = document.getFirstChild();
-                    openHABWidgetDataSource.setSourceNode(rootNode);
-                    widgetList.clear();
-                    for (OpenHABWidget w : openHABWidgetDataSource.getWidgets()) {
-                        // Remove frame widgets with no label text
-                        if (w.getType().equals("Frame") && TextUtils.isEmpty(w.getLabel()))
-                            continue;
-                        widgetList.add(w);
-                    }
-                } else {
-                    Log.e(TAG, "Got a null response from openHAB");
-                    showPage(displayPageUrl, false);
-                }
-            } catch (ParserConfigurationException | SAXException | IOException e) {
-                    Log.d(TAG, "responseString:\n" + String.valueOf(responseString));
-                    Log.e(TAG, e.getMessage(), e);
-            }
-            // Later versions work with JSON
-        } else {
-            try {
-                JSONObject pageJson = new JSONObject(responseString);
-                // In case of a server timeout in the long polling request, nothing is done
-                // and the request is restarted
-                if (longPolling && pageJson.has("timeout")
-                        && pageJson.getString("timeout").equalsIgnoreCase("true")) {
-                    Log.e(TAG, "Server timeout in the long polling request");
-                    showPage(displayPageUrl, true);
-                    return;
-                }
-                openHABWidgetDataSource.setSourceJson(pageJson);
-                widgetList.clear();
-                for (OpenHABWidget w : openHABWidgetDataSource.getWidgets()) {
-                    // Remove frame widgets with no label text
-                    if (w.getType().equals("Frame") && TextUtils.isEmpty(w.getLabel()))
-                        continue;
-                    widgetList.add(w);
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-
-        openHABWidgetAdapter.update(widgetList);
+    public void update(String pageTitle, List<OpenHABWidget> widgets) {
+        openHABWidgetAdapter.update(widgets);
         setHighlightedPageLink(getArguments().getString("highlightedPageLink"));
-
-        mTitle = openHABWidgetDataSource.getTitle();
+        mTitle = pageTitle;
         if (mActivity != null && mIsVisible) {
             mActivity.updateTitle();
         }
-        // Set widget list index to saved or zero position
-        // This would mean we got widget and command from nfc tag, so we need to do some automatic actions!
-        if (this.nfcWidgetId != null && this.nfcCommand != null) {
-            Log.d(TAG, "Have widget and command, NFC action!");
-            OpenHABWidget nfcWidget = this.openHABWidgetDataSource.getWidgetById(this.nfcWidgetId);
-            OpenHABItem nfcItem = nfcWidget.getItem();
-            // Found widget with id from nfc tag and it has an item
-            if (nfcWidget != null && nfcItem != null) {
-                // TODO: Perform nfc widget action here
-                if (this.nfcCommand.equals("TOGGLE")) {
-                    //RollerShutterItem changed to RollerShutter in later builds of OH2
-                    if (nfcItem.getType().startsWith("Rollershutter")) {
-                        if (nfcItem.getStateAsBoolean())
-                            Util.sendItemCommand(mAsyncHttpClient, nfcItem, "UP");
-                        else
-                            Util.sendItemCommand(mAsyncHttpClient, nfcItem, "DOWN");
-                    } else {
-                        if (nfcItem.getStateAsBoolean())
-                            Util.sendItemCommand(mAsyncHttpClient, nfcItem, "OFF");
-                        else
-                            Util.sendItemCommand(mAsyncHttpClient, nfcItem, "ON");
-                    }
-                } else {
-                    Util.sendItemCommand(mAsyncHttpClient, nfcItem, this.nfcCommand);
-                }
-            }
-            this.nfcWidgetId = null;
-            this.nfcCommand = null;
-            if (this.nfcAutoClose) {
-                getActivity().finish();
-            }
-        }
-
-        showPage(displayPageUrl, true);
+        stopProgressIndicator();
     }
 
     private void stopProgressIndicator() {
@@ -569,7 +339,7 @@ public class OpenHABWidgetListFragment extends Fragment
     }
 
     public String getDisplayPageUrl() {
-        return displayPageUrl;
+        return getArguments().getString("displayPageUrl");
     }
 
     public String getTitle() {

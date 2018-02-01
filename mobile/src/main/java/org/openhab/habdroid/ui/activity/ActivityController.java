@@ -22,11 +22,13 @@ import org.openhab.habdroid.R;
 import org.openhab.habdroid.core.notifications.NotificationSettings;
 import org.openhab.habdroid.model.OpenHABLinkedPage;
 import org.openhab.habdroid.model.OpenHABSitemap;
+import org.openhab.habdroid.model.OpenHABWidget;
 import org.openhab.habdroid.ui.OpenHABMainActivity;
 import org.openhab.habdroid.ui.OpenHABNotificationFragment;
 import org.openhab.habdroid.ui.OpenHABWidgetListFragment;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Stack;
 
 public abstract class ActivityController {
@@ -35,10 +37,17 @@ public abstract class ActivityController {
     protected OpenHABSitemap mCurrentSitemap;
     protected OpenHABWidgetListFragment mSitemapFragment;
     protected final Stack<Pair<OpenHABLinkedPage, OpenHABWidgetListFragment>> mPageStack = new Stack<>();
+    private PageConnectionHolderFragment mConnectionFragment;
 
     protected ActivityController(OpenHABMainActivity activity) {
         mActivity = activity;
         mFm = activity.getSupportFragmentManager();
+
+        mConnectionFragment = (PageConnectionHolderFragment) mFm.findFragmentByTag("connections");
+        if (mConnectionFragment == null) {
+            mConnectionFragment = new PageConnectionHolderFragment();
+            mFm.beginTransaction().add(mConnectionFragment, "connections").commit();
+        }
     }
 
     public void onSaveInstanceState(Bundle state) {
@@ -49,6 +58,7 @@ public abstract class ActivityController {
         state.putParcelable("controllerSitemap", mCurrentSitemap);
         state.putParcelableArrayList("controllerPages", pages);
     }
+
     public void onRestoreInstanceState(Bundle state) {
         mCurrentSitemap = state.getParcelable("controllerSitemap");
         if (mCurrentSitemap != null) {
@@ -74,11 +84,13 @@ public abstract class ActivityController {
         mSitemapFragment = makeSitemapFragment(sitemap);
         mPageStack.clear();
         updateFragmentState();
+        updateConnectionState();
     }
 
     public void openPage(OpenHABLinkedPage page, OpenHABWidgetListFragment source) {
         mPageStack.push(Pair.create(page, makePageFragment(page)));
         updateFragmentState(FragmentUpdateReason.PAGE_ENTER);
+        updateConnectionState();
     }
 
     public final void openPage(String url) {
@@ -103,6 +115,23 @@ public abstract class ActivityController {
         }
     }
 
+    public void onPageUpdated(String pageUrl, String pageTitle, List<OpenHABWidget> widgets) {
+        if (mSitemapFragment != null && pageUrl.equals(mSitemapFragment.getDisplayPageUrl())) {
+            mSitemapFragment.update(pageTitle, widgets);
+        } else {
+            for (Pair<OpenHABLinkedPage, OpenHABWidgetListFragment> item : mPageStack) {
+                if (pageUrl.equals(item.second.getDisplayPageUrl())) {
+                    item.second.update(pageTitle, widgets);
+                    break;
+                }
+            }
+        }
+    }
+
+    public void triggerPageUpdate(String pageUrl, boolean forceReload) {
+        mConnectionFragment.triggerUpdate(pageUrl, forceReload);
+    }
+
     public final void openNotifications(NotificationSettings settings) {
         showTemporaryPage(makeNotificationsFragment(settings));
     }
@@ -110,6 +139,7 @@ public abstract class ActivityController {
     public void initViews(View contentView) {}
     public void updateFragmentState() {
         updateFragmentState(FragmentUpdateReason.PAGE_UPDATE);
+        updateConnectionState();
     }
 
     public abstract String getCurrentTitle();
@@ -129,9 +159,21 @@ public abstract class ActivityController {
         if (!mPageStack.empty()) {
             mPageStack.pop();
             updateFragmentState(FragmentUpdateReason.BACK_NAVIGATION);
+            updateConnectionState();
             return true;
         }
         return false;
+    }
+
+    protected void updateConnectionState() {
+        List<String> pageUrls = new ArrayList<>();
+        if (mSitemapFragment != null) {
+            pageUrls.add(mSitemapFragment.getDisplayPageUrl());
+        }
+        for (Pair<OpenHABLinkedPage, OpenHABWidgetListFragment> item : mPageStack) {
+            pageUrls.add(item.second.getDisplayPageUrl());
+        }
+        mConnectionFragment.updateActiveConnections(pageUrls);
     }
 
     private OpenHABWidgetListFragment makeSitemapFragment(OpenHABSitemap sitemap) {

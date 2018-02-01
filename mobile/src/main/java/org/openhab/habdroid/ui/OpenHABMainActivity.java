@@ -71,7 +71,9 @@ import org.openhab.habdroid.core.notifications.GoogleCloudMessageConnector;
 import org.openhab.habdroid.core.notifications.NotificationSettings;
 import org.openhab.habdroid.model.OpenHABLinkedPage;
 import org.openhab.habdroid.model.OpenHABSitemap;
+import org.openhab.habdroid.model.OpenHABWidget;
 import org.openhab.habdroid.ui.activity.ActivityController;
+import org.openhab.habdroid.ui.activity.PageConnectionHolderFragment;
 import org.openhab.habdroid.ui.drawer.OpenHABDrawerAdapter;
 import org.openhab.habdroid.ui.drawer.OpenHABDrawerItem;
 import org.openhab.habdroid.util.Constants;
@@ -117,7 +119,8 @@ import static org.openhab.habdroid.util.Util.exceptionHasCause;
 import static org.openhab.habdroid.util.Util.removeProtocolFromUrl;
 
 public class OpenHABMainActivity extends AppCompatActivity implements
-        OpenHABTrackerReceiver, MemorizingResponder {
+        OpenHABTrackerReceiver, MemorizingResponder,
+        PageConnectionHolderFragment.ParentCallback {
 
     private abstract class DefaultHttpResponseHandler implements MyHttpClient.ResponseHandler {
 
@@ -428,6 +431,20 @@ public class OpenHABMainActivity extends AppCompatActivity implements
         if(selectSitemapDialog != null && selectSitemapDialog.isShowing()) {
             selectSitemapDialog.dismiss();
         }
+    }
+
+    @Override
+    public boolean serverReturnsJson() {
+        return mOpenHABVersion != 1;
+    }
+
+    @Override
+    public void onPageUpdated(String pageUrl, String pageTitle, List<OpenHABWidget> widgets) {
+        mController.onPageUpdated(pageUrl, pageTitle, widgets);
+    }
+
+    public void triggerPageUpdate(String pageUrl, boolean forceReload) {
+        mController.triggerPageUpdate(pageUrl, forceReload);
     }
 
     private void setupToolbar() {
@@ -1091,10 +1108,6 @@ public class OpenHABMainActivity extends AppCompatActivity implements
 
     public void setOpenHABPassword(String openHABPassword) {
         this.openHABPassword = openHABPassword;
-    }
-
-    public int getOpenHABVersion() {
-        return this.mOpenHABVersion;
     }
 
     public void gcmRegisterBackground() {
