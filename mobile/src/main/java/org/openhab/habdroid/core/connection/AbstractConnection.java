@@ -107,7 +107,7 @@ public abstract class AbstractConnection implements Connection {
             if (url.getProtocol().equals("https") && checkPort == -1)
                 checkPort = 443;
             Socket s = new Socket();
-            s.connect(new InetSocketAddress(url.getHost(), checkPort), 1000);
+            s.connect(new InetSocketAddress(url.getHost(), checkPort), 3000);
             Log.d(TAG, "Socket connected");
             s.close();
             return true;
