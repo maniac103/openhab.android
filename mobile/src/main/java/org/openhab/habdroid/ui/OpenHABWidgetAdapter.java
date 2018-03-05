@@ -17,12 +17,9 @@ import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.PorterDuff;
 import android.net.Uri;
-import android.support.annotation.ColorInt;
 import android.support.annotation.IdRes;
 import android.support.annotation.LayoutRes;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SwitchCompat;
 import android.text.TextUtils;
@@ -102,7 +99,6 @@ public class OpenHABWidgetAdapter extends RecyclerView.Adapter<OpenHABWidgetAdap
     private final ArrayList<OpenHABWidget> mItems = new ArrayList<>();
     private final LayoutInflater mInflater;
     private ItemClickListener mItemClickListener;
-    private @ColorInt int mPrimaryForegroundColor;
     private CharSequence mChartTheme;
     private int mSelectedPosition = -1;
     private final boolean mSelectionEnabled;
@@ -117,8 +113,6 @@ public class OpenHABWidgetAdapter extends RecyclerView.Adapter<OpenHABWidgetAdap
         mSelectionEnabled = selectionEnabled;
 
         TypedValue tv = new TypedValue();
-        context.getTheme().resolveAttribute(R.attr.colorControlNormal, tv, false);
-        mPrimaryForegroundColor = ContextCompat.getColor(context, tv.data);
         context.getTheme().resolveAttribute(R.attr.chartTheme, tv, true);
         mChartTheme = tv.string;
 
@@ -166,7 +160,7 @@ public class OpenHABWidgetAdapter extends RecyclerView.Adapter<OpenHABWidgetAdap
                 holder = new RollerShutterViewHolder(mInflater, parent, mConnection);
                 break;
             case TYPE_SETPOINT:
-                holder = new SetpointViewHolder(mInflater, parent, mPrimaryForegroundColor, mConnection);
+                holder = new SetpointViewHolder(mInflater, parent, mConnection);
                 break;
             case TYPE_CHART:
                 holder = new ChartViewHolder(mInflater, parent, mChartTheme, mConnection);
@@ -750,8 +744,7 @@ public class OpenHABWidgetAdapter extends RecyclerView.Adapter<OpenHABWidgetAdap
         private final LayoutInflater mInflater;
         private OpenHABWidget mBoundWidget;
 
-        SetpointViewHolder(LayoutInflater inflater, ViewGroup parent,
-                @ColorInt int primaryForegroundColor, Connection conn) {
+        SetpointViewHolder(LayoutInflater inflater, ViewGroup parent, Connection conn) {
             super(inflater, parent, R.layout.openhabwidgetlist_setpointitem, conn);
             mLabelView = itemView.findViewById(R.id.widgetlabel);
             mValueView = itemView.findViewById(R.id.widgetvalue);
@@ -761,7 +754,6 @@ public class OpenHABWidgetAdapter extends RecyclerView.Adapter<OpenHABWidgetAdap
 
             ImageView dropdownArrow = itemView.findViewById(R.id.imageViewDownArrow);
             dropdownArrow.setOnClickListener(this);
-            dropdownArrow.setColorFilter(primaryForegroundColor, PorterDuff.Mode.SRC_IN);
         }
 
         @Override

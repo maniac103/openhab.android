@@ -17,6 +17,12 @@
         <item name="themedDrawerBackground">?android:colorBackground</item>
         <item name="themedHeaderTextColor">@color/colorAccent_themeDark</item>
 
+        <item name="downButton">@drawable/ic_arrow_down_black_24dp</item>
+        <item name="upButton">@drawable/ic_arrow_up_black_24dp</item>
+        <item name="clearButton">@drawable/ic_clear_black_24dp</item>
+        <item name="colorChooserButton">@drawable/ic_color_lens_black_24dp</item>
+        <item name="spinnerCaret">@drawable/ic_spinner_caret_black</item>
+
         <item name="mal_card_background">@color/about_libraries_window_background</item>
         <item name="mal_color_primary">@color/about_libraries_title_openSource</item>
         <item name="mal_color_secondary">@color/about_libraries_text_openSource</item>
@@ -41,6 +47,12 @@
 
         <item name="themedDrawerBackground">?android:colorBackground</item>
         <item name="themedHeaderTextColor">@color/colorAccent_themeDark</item>
+
+        <item name="downButton">@drawable/ic_arrow_down_white_24dp</item>
+        <item name="upButton">@drawable/ic_arrow_up_white_24dp</item>
+        <item name="clearButton">@drawable/ic_clear_white_24dp</item>
+        <item name="colorChooserButton">@drawable/ic_color_lens_white_24dp</item>
+        <item name="spinnerCaret">@drawable/ic_spinner_caret_white</item>
 
         <item name="about_libraries_window_background">
             @color/about_libraries_window_background_dark
@@ -78,6 +90,12 @@
         <item name="themedDrawerBackground">@color/black</item>
         <item name="themedHeaderTextColor">@color/colorAccent_themeDark</item>
 
+        <item name="downButton">@drawable/ic_arrow_down_white_24dp</item>
+        <item name="upButton">@drawable/ic_arrow_up_white_24dp</item>
+        <item name="clearButton">@drawable/ic_clear_white_24dp</item>
+        <item name="colorChooserButton">@drawable/ic_color_lens_white_24dp</item>
+        <item name="spinnerCaret">@drawable/ic_spinner_caret_white</item>
+
         <item name="about_libraries_window_background">
             @color/about_libraries_window_background_dark
         </item>
@@ -112,6 +130,12 @@
         <item name="themedDrawerBackground">?android:colorBackground</item>
         <item name="themedHeaderTextColor">@color/colorAccent_themeDark</item>
 
+        <item name="downButton">@drawable/ic_arrow_down_black_24dp</item>
+        <item name="upButton">@drawable/ic_arrow_up_black_24dp</item>
+        <item name="clearButton">@drawable/ic_clear_black_24dp</item>
+        <item name="colorChooserButton">@drawable/ic_color_lens_black_24dp</item>
+        <item name="spinnerCaret">@drawable/ic_spinner_caret_black</item>
+
         <item name="mal_card_background">@color/about_libraries_window_background</item>
         <item name="mal_color_primary">@color/about_libraries_title_openSource</item>
         <item name="mal_color_secondary">@color/about_libraries_text_openSource</item>
@@ -136,6 +160,12 @@
 
         <item name="themedDrawerBackground">?android:colorBackground</item>
         <item name="themedHeaderTextColor">@color/colorAccent_themeDark</item>
+
+        <item name="downButton">@drawable/ic_arrow_down_white_24dp</item>
+        <item name="upButton">@drawable/ic_arrow_up_white_24dp</item>
+        <item name="clearButton">@drawable/ic_clear_white_24dp</item>
+        <item name="colorChooserButton">@drawable/ic_color_lens_white_24dp</item>
+        <item name="spinnerCaret">@drawable/ic_spinner_caret_white</item>
 
         <item name="about_libraries_window_background">
             @color/about_libraries_window_background_dark

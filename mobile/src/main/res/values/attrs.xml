@@ -22,5 +22,11 @@
     <attr name="themedDrawerBackground" format="reference|color" />
     <attr name="themedHeaderTextColor" format="reference|color" />
 
+    <attr name="upButton" format="reference" />
+    <attr name="downButton" format="reference" />
+    <attr name="clearButton" format="reference" />
+    <attr name="colorChooserButton" format="reference" />
+    <attr name="spinnerCaret" format="reference" />
+
     <item name="originalColor" type="id" />
 </resources>
