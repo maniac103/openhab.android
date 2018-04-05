@@ -120,8 +120,6 @@ public class OpenHABMainActivity extends AppCompatActivity implements
     // preferences
     private SharedPreferences mSettings;
     private AsyncServiceResolver mServiceResolver;
-    // Toolbar / Actionbar
-    private Toolbar mToolbar;
     // Drawer Layout
     private DrawerLayout mDrawerLayout;
     // Drawer Toggler
@@ -499,8 +497,8 @@ public class OpenHABMainActivity extends AppCompatActivity implements
     }
 
     private void setupToolbar() {
-        mToolbar = (Toolbar) findViewById(R.id.openhab_toolbar);
-        setSupportActionBar(mToolbar);
+        Toolbar toolbar = findViewById(R.id.openhab_toolbar);
+        setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setHomeButtonEnabled(true);
@@ -508,7 +506,7 @@ public class OpenHABMainActivity extends AppCompatActivity implements
 
         // ProgressBar layout params inside the toolbar have to be done programmatically
         // because it doesn't work through layout file :-(
-        mProgressBar = (ProgressBar) mToolbar.findViewById(R.id.toolbar_progress_bar);
+        mProgressBar = toolbar.findViewById(R.id.toolbar_progress_bar);
         mProgressBar.setLayoutParams(new Toolbar.LayoutParams(Gravity.END | Gravity.CENTER_VERTICAL));
         setProgressIndicatorVisible(false);
     }
