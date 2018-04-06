@@ -13,16 +13,16 @@ import com.github.paolorotolo.appintro.AppIntroFragment;
 import org.openhab.habdroid.R;
 
 public class IntroActivity extends AppIntro {
-    int colorOpenHABOrange;
-    int colorOpenHABOrangeDark;
-    int colorGrey;
+    private int mColorOpenHABOrange;
+    private int mColorOpenHABOrangeDark;
+    private int mColorGrey;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        colorOpenHABOrange = ContextCompat.getColor(this, R.color.openhab_orange);
-        colorOpenHABOrangeDark = ContextCompat.getColor(this, R.color.openhab_orange_dark);
-        colorGrey = ContextCompat.getColor(this, R.color.grey_300);
+        mColorOpenHABOrange = ContextCompat.getColor(this, R.color.openhab_orange);
+        mColorOpenHABOrangeDark = ContextCompat.getColor(this, R.color.openhab_orange_dark);
+        mColorGrey = ContextCompat.getColor(this, R.color.grey_300);
 
         // Add slides
         addOHSlide(R.string.intro_welcome,
@@ -38,8 +38,8 @@ public class IntroActivity extends AppIntro {
                 R.string.intro_nfc_description,
                 R.drawable.ic_nfc_orange_340dp);
         // Change bar color
-        setBarColor(colorOpenHABOrange);
-        setSeparatorColor(colorOpenHABOrangeDark);
+        setBarColor(mColorOpenHABOrange);
+        setSeparatorColor(mColorOpenHABOrangeDark);
     }
 
     /**
@@ -69,20 +69,19 @@ public class IntroActivity extends AppIntro {
      * @param imageDrawable
      */
     private void addOHSlide(@StringRes int title, @StringRes int description,
-                            @DrawableRes int imageDrawable) {
-            addSlide(AppIntroFragment.newInstance(getString(title),
-                    // Title font: null => default
-                    null,
-                    getString(description),
-                    // Description font: null => default
-                    null,
-                    imageDrawable,
-                    // Background color
-                    colorGrey,
-                    // Title color
-                    ContextCompat.getColor(getApplicationContext(), R.color.black),
-                    // Description color
-                    ContextCompat.getColor(getApplicationContext(), R.color.black)));
-
+            @DrawableRes int imageDrawable) {
+        addSlide(AppIntroFragment.newInstance(getString(title),
+                // Title font: null => default
+                null,
+                getString(description),
+                // Description font: null => default
+                null,
+                imageDrawable,
+                // Background color
+                mColorGrey,
+                // Title color
+                ContextCompat.getColor(this, R.color.black),
+                // Description color
+                ContextCompat.getColor(this, R.color.black)));
     }
 }
