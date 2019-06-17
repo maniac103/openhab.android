@@ -91,7 +91,6 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
     private var pendingOpenedNotificationId: String? = null
     private var shouldOpenHabpanel: Boolean = false
     private var shouldLaunchVoiceRecognition: Boolean = false
-    private var selectedSitemap: Sitemap? = null
     private lateinit var controller: ContentController
     var serverProperties: ServerProperties? = null
         private set
@@ -142,7 +141,6 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
         // Check if we have openHAB page url in saved instance state?
         if (savedInstanceState != null) {
             serverProperties = savedInstanceState.getParcelable("serverProperties")
-            selectedSitemap = savedInstanceState.getParcelable("sitemap")
             val lastConnectionHash = savedInstanceState.getInt("connectionHash")
             if (lastConnectionHash != -1) {
                 val c = ConnectionFactory.usableConnectionOrNull
@@ -331,7 +329,6 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
         isStarted = false
         with(savedInstanceState) {
             putParcelable("serverProperties", serverProperties)
-            putParcelable("sitemap", selectedSitemap)
             putBoolean("isSitemapSelectionDialogShown", sitemapSelectionDialog?.isShowing == true)
             putString("controller", controller.javaClass.canonicalName)
             putInt("connectionHash", connection?.hashCode() ?: -1)
@@ -373,7 +370,6 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
         connection = newConnection
         hideSnackbar()
         serverProperties = null
-        selectedSitemap = null
 
         // Handle pending NFC tag if initial connection determination finished
         openPendingSitemapIfNeeded()
@@ -783,9 +779,8 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
     }
 
     private fun openSitemap(sitemap: Sitemap) {
-        Log.i(TAG, "Opening sitemap $sitemap, currently selected $selectedSitemap")
-        if (sitemap != selectedSitemap) {
-            selectedSitemap = sitemap
+        Log.i(TAG, "Opening sitemap $sitemap, currently selected ${controller.currentSitemap}")
+        if (sitemap != controller.currentSitemap) {
             controller.openSitemap(sitemap)
         }
     }
