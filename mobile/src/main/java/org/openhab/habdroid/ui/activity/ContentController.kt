@@ -288,10 +288,23 @@ abstract class ContentController protected constructor(private val activity: Mai
     }
 
     /**
+     * Indicate to the user that the screen lock passcode was wrong.
+     */
+    fun indicateScreenLockFailure() {
+        Log.d(TAG, "Indicate screen lock failure")
+        noConnectionFragment = ScreenlockFailureFragment.newInstance(
+                activity.getString(R.string.settings_screenlock_wrong_password))
+        updateFragmentState(FragmentUpdateReason.PAGE_UPDATE)
+        activity.updateTitle()
+    }
+
+    /**
      * Clear the error previously set by [.indicateServerCommunicationFailure]
      */
     fun clearServerCommunicationFailure() {
-        if (noConnectionFragment is CommunicationFailureFragment) {
+        if (noConnectionFragment is CommunicationFailureFragment ||
+            noConnectionFragment is ScreenlockFailureFragment
+        ) {
             noConnectionFragment = null
             resetState()
             updateFragmentState(FragmentUpdateReason.PAGE_UPDATE)
@@ -510,6 +523,25 @@ abstract class ContentController protected constructor(private val activity: Mai
             }
         }
     }
+
+    internal class ScreenlockFailureFragment : StatusFragment() {
+        override fun onClick(view: View?) {
+            (activity as MainActivity).promptForDevicePassword()
+        }
+
+        companion object {
+            fun newInstance(message: CharSequence): ScreenlockFailureFragment {
+                val f = ScreenlockFailureFragment()
+                f.arguments = buildArgs(
+                    message, R.string.settings_screenlock_unlock,
+                    R.drawable.ic_lock_outline_grey_24dp, false
+                )
+                return f
+            }
+        }
+
+    }
+
 
     internal class ProgressFragment : StatusFragment() {
         override fun onClick(view: View) {

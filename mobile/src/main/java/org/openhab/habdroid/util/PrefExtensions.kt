@@ -57,6 +57,10 @@ fun SharedPreferences.isTaskerPluginEnabled(): Boolean {
     return getBoolean(Constants.PREFERENCE_TASKER_PLUGIN_ENABLED, false)
 }
 
+fun SharedPreferences.isScreenLockEnabled(): Boolean {
+    return getBoolean(Constants.PREFERENCE_SCREENLOCK, false)
+}
+
 fun SharedPreferences.getString(key: String): String {
     return getString(key, "").orEmpty()
 }

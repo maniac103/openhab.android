@@ -9,8 +9,10 @@
 
 package org.openhab.habdroid.ui
 
+import android.annotation.TargetApi
 import android.app.AlertDialog
 import android.app.Dialog
+import android.app.KeyguardManager
 import android.app.PendingIntent
 import android.content.*
 import android.content.pm.PackageManager
@@ -26,6 +28,7 @@ import android.net.wifi.WifiManager
 import android.nfc.NfcAdapter
 import android.os.Build
 import android.os.Bundle
+import android.os.SystemClock
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.text.SpannableStringBuilder
@@ -97,6 +100,8 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
     private var propsUpdateHandle: ServerProperties.Companion.UpdateHandle? = null
     var isStarted: Boolean = false
         private set
+    private var isLocked = true
+    private var lastAuthenticationTimestamp = 0L
     private lateinit var shortcutManager: ShortcutManager
 
     /**
@@ -212,6 +217,8 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
         super.onStart()
         isStarted = true
 
+        promptForDevicePasswordIfRequired()
+
         ConnectionFactory.addListener(this)
 
         onAvailableConnectionChanged()
@@ -280,6 +287,10 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         Log.d(TAG, "onOptionsItemSelected()")
+        if (isLocked) {
+            return true
+        }
+
         // Handle back navigation arrow
         if (item.itemId == android.R.id.home && controller.canGoBack()) {
             controller.goBack()
@@ -324,6 +335,7 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
                 }
             }
             WRITE_NFC_TAG_REQUEST_CODE -> Log.d(TAG, "Got back from Write NFC tag")
+            SCREEN_LOCK_REQUEST_CODE -> handleScreenLockResponse(resultCode != RESULT_OK)
         }
     }
 
@@ -855,6 +867,46 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
         }
     }
 
+    @TargetApi(21)
+    fun promptForDevicePassword() {
+        val km = getSystemService(KEYGUARD_SERVICE) as KeyguardManager
+        isLocked = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            km.isDeviceSecure else km.isKeyguardSecure
+        if (isLocked) {
+            val intent = km.createConfirmDeviceCredentialIntent(null,
+                getString(R.string.screenlock_unlock_screen_description))
+            startActivityForResult(intent, SCREEN_LOCK_REQUEST_CODE)
+        }
+    }
+
+    private fun handleScreenLockResponse(locked: Boolean) {
+        isLocked = locked
+        if (locked) {
+            drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
+            controller.indicateScreenLockFailure()
+        } else {
+            lastAuthenticationTimestamp = SystemClock.elapsedRealtime()
+            drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
+            if (connection != null) {
+                retryServerPropertyQuery()
+            }
+        }
+    }
+
+    private fun promptForDevicePasswordIfRequired() {
+        val timestampNeedsReauth: (ts: Long) -> Boolean = {ts ->
+            ts == 0L || SystemClock.elapsedRealtime() - ts > AUTHENTICATION_VALIDITY_PERIOD
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP &&
+            prefs.isScreenLockEnabled() &&
+            timestampNeedsReauth(lastAuthenticationTimestamp)
+        ) {
+            promptForDevicePassword()
+        } else {
+            isLocked = false
+        }
+    }
+
     private fun showDemoModeHintSnackbar() {
         showSnackbar(R.string.info_demo_mode_short, R.string.turn_off) {
             prefs.edit {
@@ -983,11 +1035,14 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
 
         private val TAG = MainActivity::class.java.simpleName
 
+        private const val AUTHENTICATION_VALIDITY_PERIOD = 120000L // 2 minutes
+
         // Activities request codes
         private const val INTRO_REQUEST_CODE = 1001
         private const val SETTINGS_REQUEST_CODE = 1002
         private const val WRITE_NFC_TAG_REQUEST_CODE = 1003
         private const val INFO_REQUEST_CODE = 1004
+        private const val SCREEN_LOCK_REQUEST_CODE = 1005
         // Drawer item codes
         private const val GROUP_ID_SITEMAPS = 1
     }
