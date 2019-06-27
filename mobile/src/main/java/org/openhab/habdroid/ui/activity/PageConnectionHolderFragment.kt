@@ -438,7 +438,8 @@ class PageConnectionHolderFragment : Fragment(), CoroutineScope {
                 }
             } else {
                 Log.w(TAG, "SSE processing failed for $url, retrying")
-                eventHelper?.connect()
+                longPolling = false
+                load()
             }
         }
 
