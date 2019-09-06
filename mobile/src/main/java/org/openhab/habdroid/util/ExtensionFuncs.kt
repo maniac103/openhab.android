@@ -25,6 +25,9 @@ import android.net.Uri
 import android.util.DisplayMetrics
 import android.util.Log
 import androidx.preference.PreferenceManager
+import android.os.Build
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKeys
 import com.caverock.androidsvg.SVG
 import com.caverock.androidsvg.SVGParseException
 import es.dmoral.toasty.Toasty
@@ -194,4 +197,19 @@ fun JSONObject.optStringOrFallback(key: String, fallback: String?): String? {
 
 fun Context.getPrefs(): SharedPreferences {
     return PreferenceManager.getDefaultSharedPreferences(this)
+}
+
+fun Context.getSecretPrefs(): SharedPreferences {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC);
+        EncryptedSharedPreferences.create(
+            "secret_shared_prefs_encrypted",
+            masterKeyAlias,
+            this,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+    } else {
+        getSharedPreferences("secret_shared_prefs", Context.MODE_PRIVATE)
+    }
 }

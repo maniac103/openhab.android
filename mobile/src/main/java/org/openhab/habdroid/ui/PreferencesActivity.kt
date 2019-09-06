@@ -17,6 +17,7 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.media.RingtoneManager
 import android.net.Uri
@@ -48,8 +49,10 @@ import org.openhab.habdroid.ui.preference.toItemUpdatePrefValue
 import org.openhab.habdroid.util.CacheManager
 import org.openhab.habdroid.util.Constants
 import org.openhab.habdroid.util.getNotificationTone
+import org.openhab.habdroid.util.getSecretPrefs
 import org.openhab.habdroid.util.getString
 import org.openhab.habdroid.util.isTaskerPluginEnabled
+import org.openhab.habdroid.util.obfuscate
 import org.openhab.habdroid.util.updateDefaultSitemap
 import java.util.BitSet
 
@@ -119,6 +122,7 @@ class PreferencesActivity : AbstractBaseActivity() {
 
         protected val parentActivity get() = activity as PreferencesActivity
         protected val prefs get() = preferenceScreen.sharedPreferences!!
+        protected val secretPrefs get() = context!!.getSecretPrefs()
 
         override fun onStart() {
             super.onStart()
@@ -323,12 +327,12 @@ class PreferencesActivity : AbstractBaseActivity() {
                 preferenceScreen.removePreference(alarmClockPref)
             } else {
                 updateAlarmClockPreferenceIcon(alarmClockPref,
-                    alarmClockPref.getPrefValue().toItemUpdatePrefValue())
+                    alarmClockPref.getPrefValue(prefs).toItemUpdatePrefValue())
                 updateAlarmClockPreferenceSummary(alarmClockPref,
-                    sendDeviceInfoPrefixPref.getPrefValue(),
-                    alarmClockPref.getPrefValue().toItemUpdatePrefValue())
+                    sendDeviceInfoPrefixPref.getPrefValue(prefs),
+                    alarmClockPref.getPrefValue(prefs).toItemUpdatePrefValue())
                 alarmClockPref.setOnPreferenceChangeListener { preference, newValue ->
-                    val prefix = sendDeviceInfoPrefixPref.getPrefValue()
+                    val prefix = sendDeviceInfoPrefixPref.getPrefValue(prefs)
                     @Suppress("UNCHECKED_CAST")
                     val value = newValue as Pair<Boolean, String>
                     updateAlarmClockPreferenceIcon(preference, newValue)
@@ -339,7 +343,7 @@ class PreferencesActivity : AbstractBaseActivity() {
 
             sendDeviceInfoPrefixPref.setOnPreferenceChangeListener { _, newValue ->
                 updateAlarmClockPreferenceSummary(alarmClockPref, newValue as String,
-                    alarmClockPref.getPrefValue().toItemUpdatePrefValue())
+                    alarmClockPref.getPrefValue(prefs).toItemUpdatePrefValue())
                 true
             }
 
@@ -440,7 +444,7 @@ class PreferencesActivity : AbstractBaseActivity() {
             val url = beautifyUrl(prefs.getString(urlPrefKey))
             val summary = when {
                 url.isEmpty() -> getString(R.string.info_not_set)
-                isConnectionSecure(url, prefs.getString(userPrefKey), prefs.getString(passwordPrefKey)) -> {
+                isConnectionSecure(url, secretPrefs.getString(userPrefKey), secretPrefs.getString(passwordPrefKey)) -> {
                     getString(R.string.settings_connection_summary, url)
                 }
                 else -> getString(R.string.settings_insecure_connection_summary, url)
@@ -477,17 +481,20 @@ class PreferencesActivity : AbstractBaseActivity() {
         protected fun initPreferences(
             urlPrefKey: String,
             userNamePrefKey: String,
+            userNameHintPrefKey: String,
             passwordPrefKey: String,
             @StringRes urlSummaryFormatResId: Int
         ) {
-            urlPreference = initEditor(urlPrefKey, R.drawable.ic_earth_grey_24dp) { value ->
+            urlPreference = initEditor(urlPrefKey, null, prefs, R.drawable.ic_earth_grey_24dp) { value ->
                 val actualValue = if (!value.isNullOrEmpty()) value else getString(R.string.info_not_set)
                 getString(urlSummaryFormatResId, actualValue)
             }
-            userNamePreference = initEditor(userNamePrefKey, R.drawable.ic_person_outline_grey_24dp) { value ->
+            userNamePreference = initEditor(userNamePrefKey, userNameHintPrefKey, secretPrefs,
+                R.drawable.ic_person_outline_grey_24dp) { value ->
                 if (!value.isNullOrEmpty()) value else getString(R.string.info_not_set)
             }
-            passwordPreference = initEditor(passwordPrefKey, R.drawable.ic_shield_key_outline_grey_24dp) { value ->
+            passwordPreference = initEditor(passwordPrefKey, null, secretPrefs,
+                R.drawable.ic_shield_key_outline_grey_24dp) { value ->
                 getString(when {
                     value.isNullOrEmpty() -> R.string.info_not_set
                     isWeakPassword(value) -> R.string.settings_openhab_password_summary_weak
@@ -501,24 +508,31 @@ class PreferencesActivity : AbstractBaseActivity() {
 
         private fun initEditor(
             key: String,
+            hintKey: String?,
+            prefsForValue: SharedPreferences,
             @DrawableRes iconResId: Int,
             summaryGenerator: (value: String?) -> CharSequence
         ): Preference {
             val preference = preferenceScreen.findPreference(key)
             preference.icon = DrawableCompat.wrap(ContextCompat.getDrawable(preference.context, iconResId)!!)
             preference.setOnPreferenceChangeListener { pref, newValue ->
-                updateIconColors(getActualValue(pref, newValue, urlPreference),
-                    getActualValue(pref, newValue, userNamePreference),
-                    getActualValue(pref, newValue, passwordPreference))
+                updateIconColors(getActualValue(prefs, pref, newValue, urlPreference),
+                    getActualValue(secretPrefs, pref, newValue, userNamePreference),
+                    getActualValue(secretPrefs, pref, newValue, passwordPreference))
                 pref.summary = summaryGenerator(newValue as String)
-                true
+                prefsForValue.edit().putString(key, newValue).apply()
+                hintKey?.let {
+                    prefs.edit().putString(hintKey, newValue.obfuscate(3)).apply()
+                }
+                false
             }
-            preference.summary = summaryGenerator(prefs.getString(key))
+            preference.summary = summaryGenerator(prefsForValue.getString(key))
             return preference
         }
 
-        private fun getActualValue(pref: Preference, newValue: Any, reference: Preference?): String? {
-            return if (pref === reference) newValue as String else reference.getPrefValue()
+        private fun getActualValue(prefs: SharedPreferences, pref: Preference, newValue: Any, reference: Preference?):
+            String? {
+            return if (pref === reference) newValue as String else reference.getPrefValue(prefs)
         }
 
         private fun updateIconColors(url: String?, userName: String?, password: String?) {
@@ -556,7 +570,8 @@ class PreferencesActivity : AbstractBaseActivity() {
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             addPreferencesFromResource(R.xml.local_connection_preferences)
             initPreferences(Constants.PREFERENCE_LOCAL_URL, Constants.PREFERENCE_LOCAL_USERNAME,
-                Constants.PREFERENCE_LOCAL_PASSWORD, R.string.settings_openhab_url_summary)
+                Constants.PREFERENCE_LOCAL_USERNAME_HINT, Constants.PREFERENCE_LOCAL_PASSWORD,
+                R.string.settings_openhab_url_summary)
         }
     }
 
@@ -566,7 +581,8 @@ class PreferencesActivity : AbstractBaseActivity() {
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             addPreferencesFromResource(R.xml.remote_connection_preferences)
             initPreferences(Constants.PREFERENCE_REMOTE_URL, Constants.PREFERENCE_REMOTE_USERNAME,
-                Constants.PREFERENCE_REMOTE_PASSWORD, R.string.settings_openhab_alturl_summary)
+                Constants.PREFERENCE_REMOTE_USERNAME_HINT, Constants.PREFERENCE_REMOTE_PASSWORD,
+                R.string.settings_openhab_alturl_summary)
         }
     }
 
@@ -585,11 +601,11 @@ class PreferencesActivity : AbstractBaseActivity() {
     }
 }
 
-fun Preference?.getPrefValue(defaultValue: String? = null): String? {
+fun Preference?.getPrefValue(prefs: SharedPreferences, defaultValue: String? = null): String? {
     if (this == null) {
         return defaultValue
     }
-    return sharedPreferences?.getString(key, defaultValue)
+    return prefs.getString(key, defaultValue)
 }
 
 fun PreferenceGroup.removePreferenceFromHierarchy(pref: Preference?) {

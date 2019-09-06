@@ -24,10 +24,8 @@ import androidx.annotation.StringRes
 import androidx.annotation.StyleRes
 import androidx.core.net.toUri
 import es.dmoral.toasty.Toasty
-
 import org.openhab.habdroid.BuildConfig
 import org.openhab.habdroid.R
-
 import java.io.EOFException
 import java.io.IOException
 import java.net.ConnectException
@@ -37,7 +35,6 @@ import java.security.cert.CertPathValidatorException
 import java.security.cert.CertificateExpiredException
 import java.security.cert.CertificateNotYetValidException
 import java.security.cert.CertificateRevokedException
-
 import javax.net.ssl.SSLException
 import javax.net.ssl.SSLPeerUnverifiedException
 
