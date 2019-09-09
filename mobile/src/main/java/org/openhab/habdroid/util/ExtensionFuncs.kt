@@ -201,7 +201,7 @@ fun Context.getPrefs(): SharedPreferences {
 
 fun Context.getSecretPrefs(): SharedPreferences {
     return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC);
+        val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
         EncryptedSharedPreferences.create(
             "secret_shared_prefs_encrypted",
             masterKeyAlias,
