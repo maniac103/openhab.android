@@ -13,15 +13,19 @@
 
 package org.openhab.habdroid.core
 
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.multidex.MultiDexApplication
 
 import org.openhab.habdroid.background.BackgroundTasksManager
 import org.openhab.habdroid.core.connection.ConnectionFactory
+import org.openhab.habdroid.util.getDayNightMode
+import org.openhab.habdroid.util.getPrefs
 
 @Suppress("UNUSED")
 class OpenHabApplication : MultiDexApplication() {
     override fun onCreate() {
         super.onCreate()
+        AppCompatDelegate.setDefaultNightMode(getPrefs().getDayNightMode(this))
         ConnectionFactory.initialize(this)
         BackgroundTasksManager.initialize(this)
     }
