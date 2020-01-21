@@ -69,6 +69,7 @@ object MapViewHelper {
         private val handler: Handler = Handler()
         private var boundItem: Item? = null
         private var started: Boolean = false
+        override val dialogManager = WidgetAdapter.DialogManager()
 
         init {
             with(mapView) {
@@ -151,6 +152,7 @@ object MapViewHelper {
                     .setNegativeButton(R.string.close, null)
                     .create()
 
+            dialogManager.manage(dialog)
             with(dialog) {
                 setOnDismissListener { mapView.onPause() }
                 setCanceledOnTouchOutside(true)

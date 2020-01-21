@@ -14,7 +14,9 @@
 package org.openhab.habdroid.ui
 
 import android.annotation.SuppressLint
+import android.app.Dialog
 import android.content.Context
+import android.content.DialogInterface
 import android.content.SharedPreferences
 import android.content.res.ColorStateList
 import android.graphics.BitmapFactory
@@ -275,11 +277,25 @@ class WidgetAdapter(
         }
     }
 
+    class DialogManager {
+        private var dialog: DialogInterface? = null
+
+        fun manage(dialog: Dialog) {
+            this.dialog?.dismiss()
+            this.dialog = dialog
+            dialog.setOnDismissListener { d -> if (d == this.dialog) this.dialog = null }
+        }
+        fun close() {
+            dialog?.dismiss()
+        }
+    }
+
     abstract class ViewHolder internal constructor(
         inflater: LayoutInflater,
         parent: ViewGroup,
         @LayoutRes layoutResId: Int
     ) : RecyclerView.ViewHolder(inflater.inflate(layoutResId, parent, false)) {
+        open val dialogManager: DialogManager? = null
         abstract fun bind(widget: Widget)
         open fun start() {}
         open fun stop() {}
@@ -710,6 +726,7 @@ class WidgetAdapter(
         colorMapper: ColorMapper
     ) : LabeledItemBaseViewHolder(inflater, parent, R.layout.widgetlist_setpointitem, connection, colorMapper) {
         private var boundWidget: Widget? = null
+        override val dialogManager = DialogManager()
 
         init {
             itemView.findViewById<View>(R.id.widgetvalue).setOnClickListener { openSelection() }
@@ -755,7 +772,7 @@ class WidgetAdapter(
                 value = closestIndex
             }
 
-            AlertDialog.Builder(itemView.context)
+            dialogManager.manage(AlertDialog.Builder(itemView.context)
                 .setTitle(labelView.text)
                 .setView(dialogView)
                 .setPositiveButton(R.string.set) { _, _ ->
@@ -763,6 +780,7 @@ class WidgetAdapter(
                 }
                 .setNegativeButton(R.string.cancel, null)
                 .show()
+            )
         }
 
         private fun handleUpDown(down: Boolean) {
@@ -937,6 +955,7 @@ class WidgetAdapter(
         View.OnTouchListener, Handler.Callback, ColorPicker.OnColorChangedListener {
         private var boundItem: Item? = null
         private val handler = Handler(this)
+        override val dialogManager = DialogManager()
 
         init {
             val buttonCommandMap =
@@ -997,10 +1016,11 @@ class WidgetAdapter(
                 picker.color = initialColor
             }
 
-            AlertDialog.Builder(contentView.context)
+            dialogManager.manage(AlertDialog.Builder(contentView.context)
                 .setView(contentView)
                 .setNegativeButton(R.string.close, null)
                 .show()
+            )
         }
     }
 

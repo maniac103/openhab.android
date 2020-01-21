@@ -348,6 +348,15 @@ class WidgetListFragment : Fragment(), WidgetAdapter.ItemClickListener {
         adapter?.updateWidget(widget)
     }
 
+    fun closeAllDialogs() {
+        val itemCount = adapter?.itemCount ?: 0
+        for (pos in 0 until itemCount) {
+            val holder =
+                recyclerView.findViewHolderForAdapterPosition(pos) as WidgetAdapter.ViewHolder?
+            holder?.dialogManager?.close()
+        }
+    }
+
     private fun startOrStopVisibleViewHolders(start: Boolean) {
         val firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition()
         val lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition()
