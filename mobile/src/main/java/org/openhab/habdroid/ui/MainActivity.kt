@@ -72,6 +72,7 @@ import org.openhab.habdroid.R
 import org.openhab.habdroid.background.BackgroundTasksManager
 import org.openhab.habdroid.background.NotificationUpdateObserver
 import org.openhab.habdroid.core.CloudMessagingHelper
+import org.openhab.habdroid.core.MessageListenerService.Companion.checkForMessages
 import org.openhab.habdroid.core.UpdateBroadcastReceiver
 import org.openhab.habdroid.core.VoiceService
 import org.openhab.habdroid.core.connection.CloudConnection
@@ -325,6 +326,9 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
         // Handle menu items
         return when (item.itemId) {
             R.id.mainmenu_voice_recognition -> {
+                launch {
+                    checkForMessages(this@MainActivity)
+                }
                 launchVoiceRecognition()
                 true
             }

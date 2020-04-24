@@ -36,6 +36,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkRequest
 import kotlinx.android.parcel.Parcelize
 import org.openhab.habdroid.R
+import org.openhab.habdroid.core.MessageListenerService
 import org.openhab.habdroid.model.NfcTag
 import org.openhab.habdroid.ui.TaskerItemPickerActivity
 import org.openhab.habdroid.ui.homescreenwidget.ItemUpdateWidget
@@ -258,14 +259,14 @@ class BackgroundTasksManager : BroadcastReceiver() {
             KNOWN_PERIODIC_KEYS.forEach { key -> scheduleWorker(context, key) }
         }
 
-        private fun managePeriodicTrigger(context: Context) {
+        fun managePeriodicTrigger(context: Context) {
             val workManager = WorkManager.getInstance(context)
             val prefs = context.getPrefs()
             val periodicWorkIsNeeded = KNOWN_PERIODIC_KEYS
                 .map { key -> prefs.getString(key, null).toItemUpdatePrefValue() }
                 .any { value -> value.first }
 
-            if (!periodicWorkIsNeeded) {
+            if (!periodicWorkIsNeeded && !MessageListenerService.isRequired()) {
                 Log.d(TAG, "Periodic workers are not needed, canceling...")
                 workManager.cancelAllWorkByTag(WORKER_TAG_PERIODIC_TRIGGER)
                 return
