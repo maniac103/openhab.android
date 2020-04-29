@@ -114,6 +114,16 @@ fun SharedPreferences.areSitemapsShownInDrawer(): Boolean {
     return getBoolean(PrefKeys.SHOW_SITEMAPS_IN_DRAWER, false)
 }
 
+fun SharedPreferences.getPrefixForVoice(): String? {
+    val enabled = getBoolean(PrefKeys.DEV_ID_PREFIX_VOICE, false)
+    return if (enabled) getString(PrefKeys.DEV_ID) else null
+}
+
+fun SharedPreferences.getPrefixForBgTasks(): String {
+    val enabled = getBoolean(PrefKeys.DEV_ID_PREFIX_BG_TASKS, true)
+    return if (enabled) getString(PrefKeys.DEV_ID) else ""
+}
+
 fun SharedPreferences.getString(key: String): String {
     return getString(key, "").orEmpty()
 }
