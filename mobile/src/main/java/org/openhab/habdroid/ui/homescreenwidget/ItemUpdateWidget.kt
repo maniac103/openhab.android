@@ -171,19 +171,24 @@ open class ItemUpdateWidget : AppWidgetProvider() {
         if (iconUrl != null) {
             val cm = CacheManager.getInstance(context)
 
-            val convertSvgIcon = { iconData: InputStream ->
-                val widgetOptions = appWidgetManager.getAppWidgetOptions(appWidgetId)
-                var height = widgetOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT).toFloat()
-                val width = widgetOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH).toFloat()
-                if (!smallWidget) {
-                    // Image view height is 50% of the widget height
-                    height *= 0.5F
+                ConnectionFactory.waitForInitialization()
+                val urlConnection = ConnectionFactory.usableConnectionOrNull
+                if (urlConnection == null) {
+                    Log.d(TAG, "Got no connection")
                 }
-                val sizeInDp = min(height, width)
-                @Px val size = context.resources.dpToPixel(sizeInDp).toInt()
-                Log.d(TAG, "Icon size: $size")
-                iconData.svgToBitmap(size)
-            }
+                val convertSvgIcon = { iconData: InputStream ->
+                    val widgetOptions = appWidgetManager.getAppWidgetOptions(appWidgetId)
+                    var height = widgetOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT).toFloat()
+                    val width = widgetOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH).toFloat()
+                    if (!smallWidget) {
+                        // Image view height is 50% of the widget height
+                        height *= 0.5F
+                    }
+                    val sizeInDp = min(height, width)
+                    @Px val size = context.resources.dpToPixel(sizeInDp).toInt()
+                    Log.d(TAG, "Icon size: $size")
+                     iconData.svgToBitmap(size, urlConnection?.httpClient)
+                }
 
             val setIcon = { iconData: InputStream, isSvg: Boolean ->
                 val iconBitmap = if (isSvg) convertSvgIcon(iconData) else BitmapFactory.decodeStream(iconData)

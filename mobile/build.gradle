@@ -154,7 +154,8 @@ dependencies {
     implementation "com.github.QuadFlask:colorpicker:0.0.15"
     // Color picker for preference
     implementation "com.jaredrummler:colorpicker:1.1.0"
-    implementation "com.caverock:androidsvg-aar:1.4"
+    ///implementation "com.caverock:androidsvg-aar:1.4"
+    implementation "com.github.ewaldc:androidsvg:-SNAPSHOT"
     implementation("com.github.appintro:appintro:5.1.0") {
         transitive false
         exclude group: "com.intellij", module: "annotations"

@@ -13,7 +13,6 @@
 
 package org.openhab.habdroid.util
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -22,6 +21,7 @@ import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
+import android.graphics.Typeface
 import android.net.Network
 import android.net.Uri
 import android.os.Build
@@ -32,6 +32,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.preference.PreferenceManager
 import com.caverock.androidsvg.SVG
+import com.caverock.androidsvg.SVGExternalFileResolver
 import es.dmoral.toasty.Toasty
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -126,7 +127,7 @@ fun Resources.dpToPixel(dp: Float): Float {
 }
 
 @Throws(IOException::class)
-fun ResponseBody.toBitmap(targetSize: Int, enforceSize: Boolean = false): Bitmap {
+fun ResponseBody.toBitmap(targetSize: Int, client: HttpClient?, enforceSize: Boolean = false): Bitmap {
     if (!contentType().isSvg()) {
         val bitmap = BitmapFactory.decodeStream(byteStream())
             ?: throw IOException("Bitmap decoding failed")
@@ -137,16 +138,49 @@ fun ResponseBody.toBitmap(targetSize: Int, enforceSize: Boolean = false): Bitmap
         }
     }
 
-    return byteStream().svgToBitmap(targetSize)
+    return byteStream().svgToBitmap(targetSize, client)
 }
 
 fun MediaType?.isSvg(): Boolean {
     return this != null && this.type == "image" && this.subtype.contains("svg")
 }
 
+open class SVGClient {
+    companion object : SVGExternalFileResolver() {
+        var client: HttpClient? = null
+        init {
+            SVG.registerExternalFileResolver(this)
+        }
+        override fun resolveFont(fontFamily: String, fontWeight: Int, fontStyle: String?): Typeface? {
+            //return Typeface.createFromAsset(getContext().getAssets(), "$fontFamily.ttf")
+            return null
+        }
+
+        override fun resolveImage(filename: String): Bitmap? {
+            return try {
+                //val istream: InputStream = getContext().getAssets().open(filename)
+                //BitmapFactory.decodeStream(istream)
+                null
+            } catch (e1: IOException) {
+                null
+            }
+        }
+
+        override fun resolveCSSStyleSheet(url: String): String? {
+            return try {
+                Log.d(Util.TAG, "SVG bitmapURL: $client")
+                client?.synchronousGet(url)
+            } catch (e1: IOException) {
+                null
+            }
+        }
+    }
+}
+
 @Throws(IOException::class)
-fun InputStream.svgToBitmap(targetSize: Int): Bitmap {
+fun InputStream.svgToBitmap(targetSize: Int, client: HttpClient?): Bitmap {
     return try {
+        SVGClient.client = client
         val svg = SVG.getFromInputStream(this)
         val displayMetrics = Resources.getSystem().displayMetrics
         svg.renderDPI = DisplayMetrics.DENSITY_DEFAULT.toFloat()

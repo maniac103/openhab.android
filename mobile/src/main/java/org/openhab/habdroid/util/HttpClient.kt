@@ -66,6 +66,19 @@ class HttpClient constructor(client: OkHttpClient, baseUrl: String?, username: S
         FORCE_CACHE_IF_POSSIBLE
     }
 
+    fun synchronousGet(url: String): String? {
+        val request = Request.Builder()
+            .url(baseUrl.toString() + url)
+            .addHeader("User-Agent", "openHAB client for Android")
+            .cacheControl(
+                CacheControl.Builder()
+                    .maxStale(Integer.MAX_VALUE, TimeUnit.SECONDS)
+                    .build())
+            .build()
+        val response = client.newCall(request).execute()
+        return if (response.isSuccessful) response.body?.string() else null
+    }
+
     fun makeSse(url: HttpUrl, listener: EventSourceListener): EventSource {
         val request = Request.Builder()
             .url(url)
@@ -179,7 +192,7 @@ class HttpClient constructor(client: OkHttpClient, baseUrl: String?, username: S
                         cont.resumeWithException(HttpException(call.request(), url, "Empty body", 500))
                     }
                     else -> {
-                        cont.resume(HttpResult(call.request(), url, body, response.code, response.headers))
+                        cont.resume(HttpResult(call.request(), url, body, response.code, response.headers, this@HttpClient))
                     }
                 }
             }
@@ -191,7 +204,8 @@ class HttpClient constructor(client: OkHttpClient, baseUrl: String?, username: S
         val originalUrl: String,
         val response: ResponseBody,
         val statusCode: Int,
-        val headers: Headers
+        val headers: Headers,
+        val client: HttpClient
     ) {
         suspend fun close() = withContext(Dispatchers.IO) {
             response.close()
@@ -214,7 +228,7 @@ class HttpClient constructor(client: OkHttpClient, baseUrl: String?, username: S
 
         @Throws(HttpException::class)
         suspend fun asBitmap(sizeInPixels: Int, enforceSize: Boolean = false): HttpBitmapResult = try {
-            val bitmap = withContext(Dispatchers.IO) { response.toBitmap(sizeInPixels, enforceSize) }
+            val bitmap = withContext(Dispatchers.IO) { response.toBitmap(sizeInPixels, client, enforceSize) }
             HttpBitmapResult(request, bitmap)
         } catch (e: IOException) {
             throw HttpException(request, originalUrl, e)
