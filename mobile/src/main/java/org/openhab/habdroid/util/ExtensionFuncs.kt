@@ -37,6 +37,7 @@ import es.dmoral.toasty.Toasty
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType
@@ -145,34 +146,35 @@ fun MediaType?.isSvg(): Boolean {
     return this != null && this.type == "image" && this.subtype.contains("svg")
 }
 
-open class SVGClient {
-    companion object : SVGExternalFileResolver() {
-        var client: HttpClient? = null
-        init {
-            SVG.registerExternalFileResolver(this)
-        }
-        override fun resolveFont(fontFamily: String, fontWeight: Int, fontStyle: String?): Typeface? {
-            //return Typeface.createFromAsset(getContext().getAssets(), "$fontFamily.ttf")
-            return null
-        }
+object SVGClient : SVGExternalFileResolver() {
+    var client: HttpClient? = null
+    init {
+        SVG.registerExternalFileResolver(this)
+    }
+    override fun resolveFont(fontFamily: String, fontWeight: Int, fontStyle: String?): Typeface? {
+        //return Typeface.createFromAsset(getContext().getAssets(), "$fontFamily.ttf")
+        return null
+    }
 
-        override fun resolveImage(filename: String): Bitmap? {
-            return try {
-                //val istream: InputStream = getContext().getAssets().open(filename)
-                //BitmapFactory.decodeStream(istream)
-                null
-            } catch (e1: IOException) {
-                null
-            }
+    override fun resolveImage(filename: String): Bitmap? {
+        return try {
+            //val istream: InputStream = getContext().getAssets().open(filename)
+            //BitmapFactory.decodeStream(istream)
+            null
+        } catch (e1: IOException) {
+            null
         }
+    }
 
-        override fun resolveCSSStyleSheet(url: String): String? {
-            return try {
-                Log.d(Util.TAG, "SVG bitmapURL: $client")
-                client?.synchronousGet(url)
-            } catch (e1: IOException) {
-                null
+    override fun resolveCSSStyleSheet(url: String): String? {
+        return try {
+            Log.d(Util.TAG, "SVG bitmapURL: $client")
+            runBlocking {
+                client?.get(url)?.asText()?.response
             }
+            //client?.synchronousGet(url)
+        } catch (e1: IOException) {
+            null
         }
     }
 }

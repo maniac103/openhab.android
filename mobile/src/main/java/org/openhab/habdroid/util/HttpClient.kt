@@ -66,19 +66,6 @@ class HttpClient constructor(client: OkHttpClient, baseUrl: String?, username: S
         FORCE_CACHE_IF_POSSIBLE
     }
 
-    fun synchronousGet(url: String): String? {
-        val request = Request.Builder()
-            .url(baseUrl.toString() + url)
-            .addHeader("User-Agent", "openHAB client for Android")
-            .cacheControl(
-                CacheControl.Builder()
-                    .maxStale(Integer.MAX_VALUE, TimeUnit.SECONDS)
-                    .build())
-            .build()
-        val response = client.newCall(request).execute()
-        return if (response.isSuccessful) response.body?.string() else null
-    }
-
     fun makeSse(url: HttpUrl, listener: EventSourceListener): EventSource {
         val request = Request.Builder()
             .url(url)
