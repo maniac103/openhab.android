@@ -128,7 +128,7 @@ fun Resources.dpToPixel(dp: Float): Float {
 }
 
 @Throws(IOException::class)
-fun ResponseBody.toBitmap(targetSize: Int, client: HttpClient?, enforceSize: Boolean = false): Bitmap {
+fun ResponseBody.toBitmap(targetSize: Int, client: HttpClient, enforceSize: Boolean = false): Bitmap {
     if (!contentType().isSvg()) {
         val bitmap = BitmapFactory.decodeStream(byteStream())
             ?: throw IOException("Bitmap decoding failed")
@@ -180,7 +180,7 @@ object SVGClient : SVGExternalFileResolver() {
 }
 
 @Throws(IOException::class)
-fun InputStream.svgToBitmap(targetSize: Int, client: HttpClient?): Bitmap {
+fun InputStream.svgToBitmap(targetSize: Int, client: HttpClient): Bitmap {
     return try {
         SVGClient.client = client
         val svg = SVG.getFromInputStream(this)
