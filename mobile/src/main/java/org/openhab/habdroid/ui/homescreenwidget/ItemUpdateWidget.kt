@@ -44,6 +44,7 @@ import org.openhab.habdroid.ui.ItemUpdateWidgetItemPickerActivity
 import org.openhab.habdroid.ui.PreferencesActivity
 import org.openhab.habdroid.util.CacheManager
 import org.openhab.habdroid.util.HttpClient
+import org.openhab.habdroid.util.SVGFileResolver
 import org.openhab.habdroid.util.ToastType
 import org.openhab.habdroid.util.dpToPixel
 import org.openhab.habdroid.util.getStringOrEmpty
@@ -187,7 +188,7 @@ open class ItemUpdateWidget : AppWidgetProvider() {
                 val sizeInDp = min(height, width)
                 @Px val size = context.resources.dpToPixel(sizeInDp).toInt()
                 Log.d(TAG, "Icon size: $size")
-                iconData.svgToBitmap(size, connection.httpClient)
+                iconData.svgToBitmap(size, SVGFileResolver(connection.httpClient))
             }
 
             val setIcon = { iconData: InputStream, isSvg: Boolean ->

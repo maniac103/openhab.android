@@ -155,7 +155,7 @@ dependencies {
     // Color picker for preference
     implementation "com.jaredrummler:colorpicker:1.1.0"
     ///implementation "com.caverock:androidsvg-aar:1.4"
-    implementation "com.github.ewaldc:androidsvg:-SNAPSHOT"
+    implementation "com.github.maniac103:androidsvg:000c968758f59bad3a7619c87dd7fdc521019d70"
     implementation("com.github.appintro:appintro:5.1.0") {
         transitive false
         exclude group: "com.intellij", module: "annotations"
