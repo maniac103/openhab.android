@@ -34,14 +34,14 @@ if (!isFoss) {
 }
 
 android {
-    buildToolsVersion "29.0.2"
-    compileSdkVersion 29
+    buildToolsVersion "30.0.0"
+    compileSdkVersion 30
     useLibrary "org.apache.http.legacy"
 
     defaultConfig {
         applicationId "org.openhab.habdroid"
         minSdkVersion 21
-        targetSdkVersion 29
+        targetSdkVersion 30
         versionCode 319
         versionName "2.14.8-beta"
         multiDexEnabled true
@@ -100,7 +100,7 @@ android {
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_1_8.toString()
         freeCompilerArgs += ["-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi"]
-        allWarningsAsErrors = true
+        //allWarningsAsErrors = true
     }
 
     androidExtensions {
