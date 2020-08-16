@@ -109,6 +109,7 @@ import org.openhab.habdroid.util.getGroupItems
 import org.openhab.habdroid.util.getHumanReadableErrorMessage
 import org.openhab.habdroid.util.getNextAvailableServerId
 import org.openhab.habdroid.util.getPrefs
+import org.openhab.habdroid.util.getPrimaryServerId
 import org.openhab.habdroid.util.getSecretPrefs
 import org.openhab.habdroid.util.getStringOrNull
 import org.openhab.habdroid.util.hasPermissions
@@ -834,7 +835,8 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
 
             val nfcItem = drawerMenu.findItem(R.id.nfc)
             nfcItem.isVisible = serverProperties != null &&
-                (NfcAdapter.getDefaultAdapter(this) != null || Util.isEmulator())
+                (NfcAdapter.getDefaultAdapter(this) != null || Util.isEmulator()) &&
+                prefs.getPrimaryServerId() == prefs.getActiveServerId()
         }
     }
 
