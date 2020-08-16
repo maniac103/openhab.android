@@ -100,6 +100,7 @@ import org.openhab.habdroid.util.ImageConversionPolicy
 import org.openhab.habdroid.util.PrefKeys
 import org.openhab.habdroid.util.RemoteLog
 import org.openhab.habdroid.util.ScreenLockMode
+import org.openhab.habdroid.util.ToastType
 import org.openhab.habdroid.util.Util
 import org.openhab.habdroid.util.areSitemapsShownInDrawer
 import org.openhab.habdroid.util.getActiveServerId
@@ -120,6 +121,7 @@ import org.openhab.habdroid.util.isResolvable
 import org.openhab.habdroid.util.isScreenTimerDisabled
 import org.openhab.habdroid.util.openInAppStore
 import org.openhab.habdroid.util.putActiveServerId
+import org.openhab.habdroid.util.showToast
 import org.openhab.habdroid.util.updateDefaultSitemap
 import java.nio.charset.Charset
 import java.util.concurrent.CancellationException
@@ -614,19 +616,23 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
 
                 val sitemapUrl = tag?.sitemap
                 if (!sitemapUrl.isNullOrEmpty()) {
-                    executeOrStoreAction(PendingAction.OpenSitemapUrl(sitemapUrl))
+                    executeOrStoreAction(PendingAction.OpenSitemapUrl(sitemapUrl, 0))
                 }
             }
             ACTION_NOTIFICATION_SELECTED -> {
                 CloudMessagingHelper.onNotificationSelected(this, intent)
-                val id = intent.getStringExtra(EXTRA_PERSISTED_NOTIFICATION_ID).orEmpty()
-                executeActionIfPossible(PendingAction.OpenNotification(id, true))
+                val notificationId = intent.getStringExtra(EXTRA_PERSISTED_NOTIFICATION_ID).orEmpty()
+                executeActionIfPossible(PendingAction.OpenNotification(notificationId, true))
             }
-            ACTION_HABPANEL_SELECTED -> executeOrStoreAction(PendingAction.OpenHabPanel())
+            ACTION_HABPANEL_SELECTED -> {
+                val serverId = intent.getIntExtra(EXTRA_SERVER_ID, ServerConfiguration.SERVER_ID_PRIMARY)
+                executeOrStoreAction(PendingAction.OpenHabPanel(serverId))
+            }
             ACTION_VOICE_RECOGNITION_SELECTED -> executeOrStoreAction(PendingAction.LaunchVoiceRecognition())
             ACTION_SITEMAP_SELECTED -> {
                 val sitemapUrl = intent.getStringExtra(EXTRA_SITEMAP_URL) ?: return
-                executeOrStoreAction(PendingAction.OpenSitemapUrl(sitemapUrl))
+                val serverId = intent.getIntExtra(EXTRA_SERVER_ID, 0)
+                executeOrStoreAction(PendingAction.OpenSitemapUrl(sitemapUrl, serverId))
             }
         }
     }
@@ -832,6 +838,7 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
 
             val habPanelItem = drawerMenu.findItem(R.id.habpanel)
             habPanelItem.isVisible = serverProperties?.hasHabPanelInstalled() == true
+            manageHabPanelShortcut(serverProperties?.hasHabPanelInstalled() == true)
 
             val nfcItem = drawerMenu.findItem(R.id.nfc)
             nfcItem.isVisible = serverProperties != null &&
@@ -899,12 +906,67 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
             true
         }
         action is PendingAction.OpenSitemapUrl && isStarted && serverProperties != null -> {
-            buildUrlAndOpenSitemap(action.url)
-            true
+            when {
+                action.serverId == ServerConfiguration.SERVER_ID_PRIMARY &&
+                    prefs.getActiveServerId() != prefs.getPrimaryServerId() -> {
+                    prefs.edit {
+                        putActiveServerId(prefs.getPrimaryServerId())
+                    }
+                    updateDrawerServerEntries()
+                    false
+                }
+                action.serverId == ServerConfiguration.SERVER_ID_PRIMARY -> {
+                    buildUrlAndOpenSitemap(action.url)
+                    true
+                }
+                action.serverId !in prefs.getConfiguredServerIds() -> {
+                    showToast(R.string.home_shortcut_server_has_been_deleted, ToastType.ERROR)
+                    true
+                }
+                prefs.getActiveServerId() != action.serverId -> {
+                    prefs.edit {
+                        putActiveServerId(action.serverId)
+                    }
+                    updateDrawerServerEntries()
+                    false
+                }
+                else -> {
+                    buildUrlAndOpenSitemap(action.url)
+                    true
+                }
+            }
         }
         action is PendingAction.OpenHabPanel && isStarted && serverProperties?.hasHabPanelInstalled() == true -> {
-            openHabPanel()
-            true
+            when {
+                action.serverId == ServerConfiguration.SERVER_ID_PRIMARY &&
+                    prefs.getActiveServerId() != prefs.getPrimaryServerId() -> {
+                    prefs.edit {
+                        putActiveServerId(prefs.getPrimaryServerId())
+                    }
+                    updateDrawerServerEntries()
+                    false
+                }
+                action.serverId == ServerConfiguration.SERVER_ID_PRIMARY ||
+                    action.serverId == ServerConfiguration.SERVER_ID_CURRENT_ACTIVE -> {
+                    openHabPanel()
+                    true
+                }
+                action.serverId !in prefs.getConfiguredServerIds() -> {
+                    showToast(R.string.home_shortcut_server_has_been_deleted, ToastType.ERROR)
+                    true
+                }
+                prefs.getActiveServerId() != action.serverId -> {
+                    prefs.edit {
+                        putActiveServerId(action.serverId)
+                    }
+                    updateDrawerServerEntries()
+                    false
+                }
+                else -> {
+                    openHabPanel()
+                    true
+                }
+            }
         }
         action is PendingAction.LaunchVoiceRecognition && serverProperties != null -> {
             launchVoiceRecognition()
@@ -1190,6 +1252,7 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
         }
         if (visible) {
             val intent = Intent(this, MainActivity::class.java)
+                .putExtra(EXTRA_SERVER_ID, ServerConfiguration.SERVER_ID_CURRENT_ACTIVE)
                 .setAction(action)
             val shortcut = ShortcutInfo.Builder(this, id)
                 .setShortLabel(getString(shortLabel))
@@ -1213,8 +1276,8 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
 
     private sealed class PendingAction {
         class ChooseSitemap : PendingAction()
-        class OpenSitemapUrl constructor(val url: String) : PendingAction()
-        class OpenHabPanel : PendingAction()
+        class OpenSitemapUrl constructor(val url: String, val serverId: Int) : PendingAction()
+        class OpenHabPanel constructor(val serverId: Int) : PendingAction()
         class LaunchVoiceRecognition : PendingAction()
         class OpenNotification constructor(val notificationId: String, val primary: Boolean) : PendingAction()
     }
@@ -1225,6 +1288,7 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
         const val ACTION_VOICE_RECOGNITION_SELECTED = "org.openhab.habdroid.action.VOICE_SELECTED"
         const val ACTION_SITEMAP_SELECTED = "org.openhab.habdroid.action.SITEMAP_SELECTED"
         const val EXTRA_SITEMAP_URL = "sitemapUrl"
+        const val EXTRA_SERVER_ID = "serverId"
         const val EXTRA_PERSISTED_NOTIFICATION_ID = "persistedNotificationId"
         private const val TAG_SNACKBAR_PRESS_AGAIN_EXIT = "pressAgainToExit"
         private const val TAG_SNACKBAR_CONNECTION_ESTABLISHED = "connectionEstablished"
