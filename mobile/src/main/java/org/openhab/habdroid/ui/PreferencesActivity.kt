@@ -49,6 +49,7 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
 import androidx.preference.SwitchPreferenceCompat
 import androidx.preference.forEachIndexed
+import androidx.work.WorkManager
 import com.jaredrummler.android.colorpicker.ColorPreferenceCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -56,6 +57,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.openhab.habdroid.R
 import org.openhab.habdroid.background.BackgroundTasksManager
 import org.openhab.habdroid.background.EventListenerService
+import org.openhab.habdroid.background.BackgroundTasksManager.Companion.buildWorkerTagForServer
 import org.openhab.habdroid.background.tiles.AbstractTileService
 import org.openhab.habdroid.background.tiles.TileData
 import org.openhab.habdroid.background.tiles.getTileData
@@ -612,6 +614,10 @@ class PreferencesActivity : AbstractBaseActivity() {
                         .setMessage(R.string.settings_server_confirm_deletion)
                         .setPositiveButton(R.string.settings_menu_delete_server) { _, _ ->
                             config.removeFromPrefs(prefs, secretPrefs)
+                            WorkManager.getInstance(preferenceManager.context).apply {
+                                cancelAllWorkByTag(buildWorkerTagForServer(config.id))
+                                pruneWork()
+                            }
                             parentFragmentManager.popBackStack() // close ourself
                         }
                         .setNegativeButton(android.R.string.cancel, null)

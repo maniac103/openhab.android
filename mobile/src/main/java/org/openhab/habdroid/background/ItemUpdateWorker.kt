@@ -62,7 +62,11 @@ class ItemUpdateWorker(context: Context, params: WorkerParameters) : Worker(cont
         }
 
         Log.d(TAG, "Trying to get connection")
-        val connection = ConnectionFactory.primaryUsableConnection?.connection
+        val connection = if (inputData.getBoolean(INPUT_DATA_PRIMARY_SERVER, false)) {
+            ConnectionFactory.primaryUsableConnection?.connection
+        } else {
+            ConnectionFactory.activeUsableConnection?.connection
+        }
 
         val showToast = inputData.getBoolean(INPUT_DATA_SHOW_TOAST, false)
         val taskerIntent = inputData.getString(INPUT_DATA_TASKER_INTENT)
@@ -295,6 +299,7 @@ class ItemUpdateWorker(context: Context, params: WorkerParameters) : Worker(cont
             .putString(OUTPUT_DATA_TASKER_INTENT, inputData.getString(INPUT_DATA_TASKER_INTENT))
             .putString(OUTPUT_DATA_AS_COMMAND, inputData.getString(INPUT_DATA_AS_COMMAND))
             .putString(OUTPUT_DATA_IS_IMPORTANT, inputData.getString(INPUT_DATA_IS_IMPORTANT))
+            .putString(OUTPUT_DATA_PRIMARY_SERVER, inputData.getString(INPUT_DATA_PRIMARY_SERVER))
             .putLong(OUTPUT_DATA_TIMESTAMP, System.currentTimeMillis())
             .build()
     }
@@ -335,6 +340,7 @@ class ItemUpdateWorker(context: Context, params: WorkerParameters) : Worker(cont
         private const val INPUT_DATA_TASKER_INTENT = "taskerIntent"
         private const val INPUT_DATA_AS_COMMAND = "command"
         private const val INPUT_DATA_IS_IMPORTANT = "is_important"
+        private const val INPUT_DATA_PRIMARY_SERVER = "primary_server"
 
         const val OUTPUT_DATA_HAS_CONNECTION = "hasConnection"
         const val OUTPUT_DATA_HTTP_STATUS = "httpStatus"
@@ -346,6 +352,7 @@ class ItemUpdateWorker(context: Context, params: WorkerParameters) : Worker(cont
         const val OUTPUT_DATA_TASKER_INTENT = "taskerIntent"
         const val OUTPUT_DATA_AS_COMMAND = "command"
         const val OUTPUT_DATA_IS_IMPORTANT = "is_important"
+        const val OUTPUT_DATA_PRIMARY_SERVER = "primary_server"
         const val OUTPUT_DATA_TIMESTAMP = "timestamp"
 
         fun buildData(
@@ -355,7 +362,8 @@ class ItemUpdateWorker(context: Context, params: WorkerParameters) : Worker(cont
             showToast: Boolean,
             taskerIntent: String?,
             asCommand: Boolean,
-            isImportant: Boolean
+            isImportant: Boolean,
+            primaryServer: Boolean
         ): Data {
             return Data.Builder()
                 .putString(INPUT_DATA_ITEM_NAME, itemName)
@@ -365,6 +373,7 @@ class ItemUpdateWorker(context: Context, params: WorkerParameters) : Worker(cont
                 .putString(INPUT_DATA_TASKER_INTENT, taskerIntent)
                 .putBoolean(INPUT_DATA_AS_COMMAND, asCommand)
                 .putBoolean(INPUT_DATA_IS_IMPORTANT, isImportant)
+                .putBoolean(INPUT_DATA_PRIMARY_SERVER, primaryServer)
                 .build()
         }
     }
