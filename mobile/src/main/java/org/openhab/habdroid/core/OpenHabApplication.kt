@@ -95,14 +95,13 @@ class OpenHabApplication : MultiDexApplication() {
     @RequiresApi(Build.VERSION_CODES.R)
     private fun registerDataAccessAudit() {
         val appOpsCallback = object : AppOpsManager.OnOpNotedCallback() {
-            private fun logPrivateDataAccess(opCode: String, attributionTag: String?, trace: String) {
-                Log.i("DA_$attributionTag", "Operation: $opCode\nStacktrace: $trace")
+            private fun logPrivateDataAccess(opCode: String, trace: String) {
+                Log.e("DataAudit", "Operation: $opCode\nStacktrace: $trace")
             }
 
             override fun onNoted(syncNotedAppOp: SyncNotedAppOp) {
                 logPrivateDataAccess(
                     syncNotedAppOp.op,
-                    syncNotedAppOp.attributionTag,
                     Throwable().stackTrace.toString()
                 )
             }
@@ -110,7 +109,6 @@ class OpenHabApplication : MultiDexApplication() {
             override fun onSelfNoted(syncNotedAppOp: SyncNotedAppOp) {
                 logPrivateDataAccess(
                     syncNotedAppOp.op,
-                    syncNotedAppOp.attributionTag,
                     Throwable().stackTrace.toString()
                 )
             }
@@ -118,7 +116,6 @@ class OpenHabApplication : MultiDexApplication() {
             override fun onAsyncNoted(asyncNotedAppOp: AsyncNotedAppOp) {
                 logPrivateDataAccess(
                     asyncNotedAppOp.op,
-                    asyncNotedAppOp.attributionTag,
                     asyncNotedAppOp.message
                 )
             }

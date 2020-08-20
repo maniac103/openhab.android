@@ -388,7 +388,7 @@ class PreferencesActivity : AbstractBaseActivity() {
             }
 
             fullscreenPreference.setOnPreferenceChangeListener { _, newValue ->
-                (activity as AbstractBaseActivity).checkFullscreen(newValue as Boolean)
+                (activity as AbstractBaseActivity).setFullscreen(newValue as Boolean)
                 true
             }
 
@@ -784,7 +784,8 @@ class PreferencesActivity : AbstractBaseActivity() {
                 ?.toTypedArray()
             if (value.first && permissionsToRequest != null && !context.hasPermissions(permissionsToRequest)) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
-                    permissionsToRequest.contains(Manifest.permission.ACCESS_BACKGROUND_LOCATION)) {
+                    permissionsToRequest.contains(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                ) {
                     if (permissionsToRequest.size > 1) {
                         Log.d(TAG, "Remove background location from permissions to request")
                         permissionsToRequest = permissionsToRequest.toMutableList().apply {
@@ -793,8 +794,10 @@ class PreferencesActivity : AbstractBaseActivity() {
                     } else {
                         val snackbar = Snackbar.make(
                             parentActivity.findViewById<View>(android.R.id.content),
-                            getString(R.string.settings_background_tasks_permission_denied_background_location,
-                                parentActivity.packageManager.backgroundPermissionOptionLabel),
+                            getString(
+                                R.string.settings_background_tasks_permission_denied_background_location,
+                                parentActivity.packageManager.backgroundPermissionOptionLabel
+                            ),
                             Snackbar.LENGTH_LONG
                         )
                         snackbar.setAction(android.R.string.ok) {
