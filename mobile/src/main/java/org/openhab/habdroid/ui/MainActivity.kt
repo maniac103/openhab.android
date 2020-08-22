@@ -224,6 +224,7 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
 
         val isSpeechRecognizerAvailable = SpeechRecognizer.isRecognitionAvailable(this)
         GlobalScope.launch {
+            showPushNotificationWarningIfNeeded()
             manageVoiceRecognitionShortcut(isSpeechRecognizerAvailable)
             setVoiceWidgetComponentEnabledSetting(VoiceWidget::class.java, isSpeechRecognizerAvailable)
             setVoiceWidgetComponentEnabledSetting(VoiceWidgetWithIcon::class.java, isSpeechRecognizerAvailable)
@@ -488,6 +489,9 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
         RemoteLog.d(TAG, "onCloudConnectionChanged()")
         updateNotificationDrawerItem()
         handlePendingAction()
+        GlobalScope.launch {
+            showPushNotificationWarningIfNeeded()
+        }
     }
 
     private fun handleConnectionChange() {
@@ -942,6 +946,13 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
         }
     }
 
+    private suspend fun showPushNotificationWarningIfNeeded() {
+        val status = CloudMessagingHelper.getPushNotificationStatus(this@MainActivity)
+        if (status.notifyUser) {
+            showSnackbar(status.message, tag = TAG_SNACKBAR_PUSH_NOTIFICATION_FAIL)
+        }
+    }
+
     fun showRefreshHintSnackbarIfNeeded() {
         if (prefs.getBoolean(PrefKeys.SWIPE_REFRESH_EXPLAINED, false)) {
             return
@@ -983,6 +994,16 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
         @BaseTransientBottomBar.Duration duration: Int = Snackbar.LENGTH_LONG,
         onClickListener: (() -> Unit)? = null
     ) {
+        fun showNextSnackbar() {
+            if (lastSnackbar?.isShown == true || snackbarQueue.isEmpty()) {
+                Log.d(TAG, "No next snackbar to show")
+                return
+            }
+            val nextSnackbar = snackbarQueue.removeAt(0)
+            nextSnackbar.show()
+            lastSnackbar = nextSnackbar
+        }
+
         val snackbar = Snackbar.make(findViewById(android.R.id.content), messageResId, duration)
         if (actionResId != 0 && onClickListener != null) {
             snackbar.setAction(actionResId) { onClickListener() }
@@ -1003,16 +1024,6 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
         Log.d(TAG, "Queue snackbar with tag $tag")
         snackbarQueue.add(snackbar)
         showNextSnackbar()
-    }
-
-    private fun showNextSnackbar() {
-        if (lastSnackbar?.isShown == true || snackbarQueue.isEmpty()) {
-            Log.d(TAG, "No next snackbar to show")
-            return
-        }
-        val nextSnackbar = snackbarQueue.removeAt(0)
-        nextSnackbar.show()
-        lastSnackbar = nextSnackbar
     }
 
     private fun hideSnackbar(tag: String) {
@@ -1199,6 +1210,7 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
         private const val TAG_SNACKBAR_NO_MANUAL_REFRESH_REQUIRED = "noManualRefreshRequired"
         private const val TAG_SNACKBAR_NO_VOICE_RECOGNITION_INSTALLED = "noVoiceRecognitionInstalled"
         private const val TAG_SNACKBAR_DATA_SAVER_ON = "dataSaverOn"
+        private const val TAG_SNACKBAR_PUSH_NOTIFICATION_FAIL = "pushNotificationFail"
 
         private const val STATE_KEY_SERVER_PROPERTIES = "serverProperties"
         private const val STATE_KEY_SITEMAP_SELECTION_SHOWN = "isSitemapSelectionDialogShown"

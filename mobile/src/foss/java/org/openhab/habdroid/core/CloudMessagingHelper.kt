@@ -56,15 +56,18 @@ object CloudMessagingHelper {
         return when {
             !context.getPrefs().getBoolean(PrefKeys.FOSS_NOTIFICATIONS_ENABLED, false) -> PushNotificationStatus(
                 context.getString(R.string.push_notification_status_disabled),
-                R.drawable.ic_bell_off_outline_grey_24dp
+                R.drawable.ic_bell_off_outline_grey_24dp,
+                false
             )
             context.getPrefs().getStringOrEmpty(PrefKeys.REMOTE_URL).isEmpty() -> PushNotificationStatus(
                 context.getString(R.string.push_notification_status_no_remote_configured),
-                R.drawable.ic_bell_off_outline_grey_24dp
+                R.drawable.ic_bell_off_outline_grey_24dp,
+                false
             )
             ConnectionFactory.cloudConnectionOrNull != null -> PushNotificationStatus(
                 context.getString(R.string.push_notification_status_impaired),
                 R.drawable.ic_bell_ring_outline_grey_24dp,
+                false,
                 AboutActivity.AboutMainFragment.makeClickRedirect(
                     context,
                     "https://www.openhab.org/docs/apps/android.html#notifications-in-foss-version"
@@ -80,11 +83,12 @@ object CloudMessagingHelper {
                         true
                     )
                 )
-                PushNotificationStatus(message, R.drawable.ic_bell_off_outline_grey_24dp)
+                PushNotificationStatus(message, R.drawable.ic_bell_off_outline_grey_24dp, true)
             }
             else -> PushNotificationStatus(
                 context.getString(R.string.push_notification_status_remote_no_cloud),
-                R.drawable.ic_bell_off_outline_grey_24dp
+                R.drawable.ic_bell_off_outline_grey_24dp,
+                false
             )
         }
     }

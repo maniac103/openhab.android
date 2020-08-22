@@ -310,5 +310,6 @@ class AboutActivity : AbstractBaseActivity(), FragmentManager.OnBackStackChanged
 data class PushNotificationStatus(
     val message: String,
     @DrawableRes val icon: Int,
+    val notifyUser: Boolean,
     val onClickAction: MaterialAboutItemOnClickAction? = null
 )

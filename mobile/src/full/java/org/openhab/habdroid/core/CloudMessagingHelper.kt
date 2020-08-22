@@ -68,7 +68,8 @@ object CloudMessagingHelper {
             context.getPrefs().getStringOrEmpty(PrefKeys.REMOTE_URL).isEmpty() ->
                 PushNotificationStatus(
                     context.getString(R.string.push_notification_status_no_remote_configured),
-                    R.drawable.ic_bell_off_outline_grey_24dp
+                    R.drawable.ic_bell_off_outline_grey_24dp,
+                    false
                 )
             // Cloud connection failed
             ConnectionFactory.cloudConnectionOrNull == null && cloudFailure != null -> {
@@ -80,19 +81,21 @@ object CloudMessagingHelper {
                         true
                     )
                 )
-                PushNotificationStatus(message, R.drawable.ic_bell_off_outline_grey_24dp)
+                PushNotificationStatus(message, R.drawable.ic_bell_off_outline_grey_24dp, true)
             }
             // Remote server is configured, but it's not a cloud instance
             ConnectionFactory.cloudConnectionOrNull == null && ConnectionFactory.remoteConnectionOrNull != null ->
                 PushNotificationStatus(
                     context.getString(R.string.push_notification_status_remote_no_cloud),
-                    R.drawable.ic_bell_off_outline_grey_24dp
+                    R.drawable.ic_bell_off_outline_grey_24dp,
+                    false
                 )
             // Registration isn't done yet
             !registrationDone ->
                 PushNotificationStatus(
                     context.getString(R.string.info_openhab_gcm_in_progress),
-                    R.drawable.ic_bell_outline_grey_24dp
+                    R.drawable.ic_bell_outline_grey_24dp,
+                    false
                 )
             // Registration failed
             registrationFailureReason != null -> {
@@ -103,11 +106,12 @@ object CloudMessagingHelper {
                         R.string.info_openhab_gcm_failed_play_services,
                         gaa.getErrorString(errorCode)
                     )
-                    PushNotificationStatus(message, R.drawable.ic_bell_off_outline_grey_24dp)
+                    PushNotificationStatus(message, R.drawable.ic_bell_off_outline_grey_24dp, true)
                 } else {
                     PushNotificationStatus(
                         context.getString(R.string.info_openhab_gcm_failed),
-                        R.drawable.ic_bell_off_outline_grey_24dp
+                        R.drawable.ic_bell_off_outline_grey_24dp,
+                        true
                     )
                 }
             }
@@ -115,7 +119,8 @@ object CloudMessagingHelper {
             else ->
                 PushNotificationStatus(
                     context.getString(R.string.info_openhab_gcm_connected),
-                    R.drawable.ic_bell_ring_outline_grey_24dp
+                    R.drawable.ic_bell_ring_outline_grey_24dp,
+                    false
                 )
         }
     }
