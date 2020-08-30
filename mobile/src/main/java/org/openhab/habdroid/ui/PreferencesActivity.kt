@@ -53,6 +53,7 @@ import androidx.preference.SwitchPreferenceCompat
 import androidx.preference.forEachIndexed
 import com.google.android.material.snackbar.Snackbar
 import com.jaredrummler.android.colorpicker.ColorPreferenceCompat
+import java.util.BitSet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -88,7 +89,6 @@ import org.openhab.habdroid.util.getStringOrNull
 import org.openhab.habdroid.util.hasPermissions
 import org.openhab.habdroid.util.isTaskerPluginEnabled
 import org.openhab.habdroid.util.updateDefaultSitemap
-import java.util.BitSet
 
 /**
  * This is a class to provide preferences activity for application.

@@ -60,6 +60,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.Snackbar
+import java.nio.charset.Charset
+import java.util.concurrent.CancellationException
+import javax.jmdns.ServiceInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -111,9 +114,6 @@ import org.openhab.habdroid.util.isResolvable
 import org.openhab.habdroid.util.isScreenTimerDisabled
 import org.openhab.habdroid.util.openInAppStore
 import org.openhab.habdroid.util.updateDefaultSitemap
-import java.nio.charset.Charset
-import java.util.concurrent.CancellationException
-import javax.jmdns.ServiceInfo
 
 class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
     private lateinit var prefs: SharedPreferences

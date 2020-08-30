@@ -29,12 +29,12 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.multidex.MultiDexApplication
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
+import java.security.InvalidKeyException
 import org.openhab.habdroid.background.BackgroundTasksManager
 import org.openhab.habdroid.core.connection.ConnectionFactory
 import org.openhab.habdroid.util.RemoteLog
 import org.openhab.habdroid.util.getDayNightMode
 import org.openhab.habdroid.util.getPrefs
-import java.security.InvalidKeyException
 
 class OpenHabApplication : MultiDexApplication() {
     interface OnDataSaverActiveStateChangedListener {
