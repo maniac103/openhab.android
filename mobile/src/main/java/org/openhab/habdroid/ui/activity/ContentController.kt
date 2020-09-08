@@ -38,12 +38,16 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.commit
 import androidx.fragment.app.commitNow
+import java.util.ArrayList
+import java.util.HashSet
+import java.util.Stack
 import org.openhab.habdroid.R
 import org.openhab.habdroid.core.connection.Connection
 import org.openhab.habdroid.core.connection.ConnectionFactory
 import org.openhab.habdroid.model.LinkedPage
 import org.openhab.habdroid.model.Sitemap
 import org.openhab.habdroid.model.Widget
+import org.openhab.habdroid.ui.AbstractBaseActivity.Companion.TAG_SNACKBAR_SSE_ERROR
 import org.openhab.habdroid.ui.CloudNotificationListFragment
 import org.openhab.habdroid.ui.MainActivity
 import org.openhab.habdroid.ui.PreferencesActivity
@@ -54,9 +58,6 @@ import org.openhab.habdroid.util.RemoteLog
 import org.openhab.habdroid.util.getHumanReadableErrorMessage
 import org.openhab.habdroid.util.getPrefs
 import org.openhab.habdroid.util.isDebugModeEnabled
-import java.util.ArrayList
-import java.util.HashSet
-import java.util.Stack
 
 /**
  * Controller class for the content area of [MainActivity]
@@ -448,7 +449,7 @@ abstract class ContentController protected constructor(private val activity: Mai
     }
 
     override fun onSseFailure() {
-        activity.showSnackbar(R.string.error_sse_failed, tag = MainActivity.TAG_SNACKBAR_SSE_ERROR)
+        activity.showSnackbar(R.string.error_sse_failed, tag = TAG_SNACKBAR_SSE_ERROR)
     }
 
     internal abstract fun executeStateUpdate(reason: FragmentUpdateReason, allowStateLoss: Boolean)
