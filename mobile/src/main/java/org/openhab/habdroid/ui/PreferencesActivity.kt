@@ -790,13 +790,13 @@ class PreferencesActivity : AbstractBaseActivity() {
                         }.toTypedArray()
                     } else {
                         parentActivity.showSnackbar(
+                            TAG_SNACKBAR_BG_TASKS_MISSING_PERMISSION_LOCATION,
                             getString(
                                 R.string.settings_background_tasks_permission_denied_background_location,
                                 parentActivity.packageManager.backgroundPermissionOptionLabel
                             ),
-                            android.R.string.ok,
-                            TAG_SNACKBAR_BG_TASKS_MISSING_PERMISSION_LOCATION,
-                            Snackbar.LENGTH_LONG
+                            Snackbar.LENGTH_LONG,
+                            android.R.string.ok
                         ) {
                             Intent(Settings.ACTION_APPLICATION_SETTINGS).apply {
                                 putExtra(Settings.EXTRA_APP_PACKAGE, BuildConfig.APPLICATION_ID)
@@ -819,8 +819,8 @@ class PreferencesActivity : AbstractBaseActivity() {
                 PERMISSIONS_REQUEST_FOR_CALL_STATE -> {
                     if (grantResults.firstOrNull { it != PackageManager.PERMISSION_GRANTED } != null) {
                         parentActivity.showSnackbar(
-                            R.string.settings_phone_state_permission_denied,
-                            tag = TAG_SNACKBAR_BG_TASKS_PERMISSION_DECLINED_PHONE
+                            TAG_SNACKBAR_BG_TASKS_PERMISSION_DECLINED_PHONE,
+                            R.string.settings_phone_state_permission_denied
                         )
                         phoneStatePref.setValue(checked = false)
                     } else {
@@ -830,8 +830,8 @@ class PreferencesActivity : AbstractBaseActivity() {
                 PERMISSIONS_REQUEST_FOR_WIFI_NAME -> {
                     if (grantResults.firstOrNull { it != PackageManager.PERMISSION_GRANTED } != null) {
                         parentActivity.showSnackbar(
-                            R.string.settings_wifi_ssid_permission_denied,
-                            tag = TAG_SNACKBAR_BG_TASKS_PERMISSION_DECLINED_WIFI
+                            TAG_SNACKBAR_BG_TASKS_PERMISSION_DECLINED_WIFI,
+                            R.string.settings_wifi_ssid_permission_denied
                         )
                         wifiSsidPref.setValue(checked = false)
                     } else {
@@ -939,9 +939,9 @@ class PreferencesActivity : AbstractBaseActivity() {
                         if (itemName.isNullOrEmpty() || state.isNullOrEmpty() || label.isNullOrEmpty() ||
                             tileLabel.isNullOrEmpty() || mappedState.isNullOrEmpty() || icon.isNullOrEmpty()) {
                             parentActivity.showSnackbar(
+                                TAG_SNACKBAR_ERROR_SAVING_TILE,
                                 R.string.tile_error_saving,
-                                tag = TAG_SNACKBAR_ERROR_SAVING_TILE,
-                                duration = Snackbar.LENGTH_LONG
+                                Snackbar.LENGTH_LONG
                             )
                             return true
                         }

@@ -393,9 +393,15 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
             controller.canGoBack() -> controller.goBack()
             isFullscreenEnabled -> when {
                 lastSnackbar?.isShown != true ->
-                    showSnackbar(R.string.press_back_to_exit, tag = TAG_SNACKBAR_PRESS_AGAIN_EXIT)
+                    showSnackbar(
+                        TAG_SNACKBAR_PRESS_AGAIN_EXIT,
+                        R.string.press_back_to_exit
+                    )
                 lastSnackbar?.view?.tag?.toString() == TAG_SNACKBAR_PRESS_AGAIN_EXIT -> super.onBackPressed()
-                else -> showSnackbar(R.string.press_back_to_exit, tag = TAG_SNACKBAR_PRESS_AGAIN_EXIT)
+                else -> showSnackbar(
+                    TAG_SNACKBAR_PRESS_AGAIN_EXIT,
+                    R.string.press_back_to_exit
+                )
             }
             else -> super.onBackPressed()
         }
@@ -493,7 +499,11 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
 
     private fun handleConnectionChange() {
         if (connection is DemoConnection) {
-            showSnackbar(R.string.info_demo_mode_short, R.string.turn_off, TAG_SNACKBAR_DEMO_MODE_ACTIVE) {
+            showSnackbar(
+                TAG_SNACKBAR_DEMO_MODE_ACTIVE,
+                R.string.info_demo_mode_short,
+                actionResId = R.string.turn_off
+            ) {
                 prefs.edit {
                     putBoolean(PrefKeys.DEMO_MODE, false)
                 }
@@ -503,11 +513,17 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
                 ConnectionFactory.localConnectionOrNull != null && ConnectionFactory.remoteConnectionOrNull != null
             val type = connection?.connectionType
             if (hasLocalAndRemote && type == Connection.TYPE_LOCAL) {
-                showSnackbar(R.string.info_conn_url, tag = TAG_SNACKBAR_CONNECTION_ESTABLISHED,
-                    duration = Snackbar.LENGTH_SHORT)
+                showSnackbar(
+                    TAG_SNACKBAR_CONNECTION_ESTABLISHED,
+                    R.string.info_conn_url,
+                    Snackbar.LENGTH_SHORT
+                )
             } else if (hasLocalAndRemote && type == Connection.TYPE_REMOTE) {
-                showSnackbar(R.string.info_conn_rem_url, tag = TAG_SNACKBAR_CONNECTION_ESTABLISHED,
-                    duration = Snackbar.LENGTH_SHORT)
+                showSnackbar(
+                    TAG_SNACKBAR_CONNECTION_ESTABLISHED,
+                    R.string.info_conn_rem_url,
+                    Snackbar.LENGTH_SHORT
+                )
             }
         }
         queryServerProperties()
@@ -936,8 +952,11 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
         if (speechIntent.isResolvable(this)) {
             startActivity(speechIntent)
         } else {
-            showSnackbar(R.string.error_no_speech_to_text_app_found, R.string.install,
-                TAG_SNACKBAR_NO_VOICE_RECOGNITION_INSTALLED) {
+            showSnackbar(
+                TAG_SNACKBAR_NO_VOICE_RECOGNITION_INSTALLED,
+                R.string.error_no_speech_to_text_app_found,
+                actionResId = R.string.install
+            ) {
                 openInAppStore("com.google.android.googlequicksearchbox")
             }
         }
@@ -946,7 +965,7 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
     private suspend fun showPushNotificationWarningIfNeeded() {
         val status = CloudMessagingHelper.getPushNotificationStatus(this@MainActivity)
         if (status.notifyUser) {
-            showSnackbar(status.message, tag = TAG_SNACKBAR_PUSH_NOTIFICATION_FAIL)
+            showSnackbar(TAG_SNACKBAR_PUSH_NOTIFICATION_FAIL, status.message)
         }
     }
 
@@ -955,7 +974,11 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
             return
         }
 
-        showSnackbar(R.string.swipe_to_refresh_description, R.string.got_it, TAG_SNACKBAR_NO_MANUAL_REFRESH_REQUIRED) {
+        showSnackbar(
+            TAG_SNACKBAR_NO_MANUAL_REFRESH_REQUIRED,
+            R.string.swipe_to_refresh_description,
+            actionResId = R.string.got_it
+        ) {
             prefs.edit {
                 putBoolean(PrefKeys.SWIPE_REFRESH_EXPLAINED, true)
             }
@@ -967,7 +990,11 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
             return
         }
 
-        showSnackbar(R.string.data_saver_snackbar, R.string.got_it, TAG_SNACKBAR_DATA_SAVER_ON) {
+        showSnackbar(
+            TAG_SNACKBAR_DATA_SAVER_ON,
+            R.string.data_saver_snackbar,
+            actionResId = R.string.got_it
+        ) {
             prefs.edit {
                 putBoolean(PrefKeys.DATA_SAVER_EXPLAINED, true)
             }
@@ -1035,12 +1062,12 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
                 missingPermissions.remove(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
             } else {
                 showSnackbar(
+                    TAG_SNACKBAR_BG_TASKS_MISSING_PERMISSION_LOCATION,
                     getString(
                         R.string.settings_background_tasks_permission_denied_background_location,
                         packageManager.backgroundPermissionOptionLabel
                     ),
-                    android.R.string.ok,
-                    TAG_SNACKBAR_BG_TASKS_MISSING_PERMISSION_LOCATION
+                    actionResId = android.R.string.ok
                 ) {
                     Intent(Settings.ACTION_APPLICATION_SETTINGS).apply {
                         putExtra(Settings.EXTRA_APP_PACKAGE, BuildConfig.APPLICATION_ID)
@@ -1054,9 +1081,9 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
         if (missingPermissions.isNotEmpty()) {
             Log.d(TAG, "At least one permission for background tasks have been denied")
             showSnackbar(
+                TAG_SNACKBAR_BG_TASKS_MISSING_PERMISSIONS,
                 R.string.settings_background_tasks_permission_denied,
-                R.string.settings_background_tasks_permission_allow,
-                TAG_SNACKBAR_BG_TASKS_MISSING_PERMISSIONS
+                actionResId = R.string.settings_background_tasks_permission_allow
             ) {
                 ActivityCompat.requestPermissions(
                     this,
