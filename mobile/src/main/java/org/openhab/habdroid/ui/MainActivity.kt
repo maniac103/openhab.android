@@ -716,7 +716,29 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
 
     private fun handleServiceResolveResult(info: ServiceInfo?) {
         if (info != null) {
-            info.addToPrefs(this)
+            val serverId = info.addToPrefs(this)
+            val currentSsid = getCurrentWifiSsid()
+            if (!currentSsid.isNullOrEmpty() && prefs.getConfiguredServerIds().size > 1) {
+                showSnackbar(
+                    SNACKBAR_TAG_NEW_SERVER_WIFI,
+                    R.string.bind_server_to_wifi,
+                    Snackbar.LENGTH_LONG,
+                    R.string.bind_button
+                ) {
+                    ServerConfiguration.load(prefs, getSecretPrefs(), serverId)?.let { config ->
+                        val newConfig = ServerConfiguration(
+                            config.id,
+                            config.name,
+                            config.localPath,
+                            config.remotePath,
+                            config.sslClientCert,
+                            config.defaultSitemap,
+                            currentSsid
+                        )
+                        newConfig.saveToPrefs(prefs, getSecretPrefs())
+                    }
+                }
+            }
         } else {
             Log.d(TAG, "Failed to discover openHAB server")
             controller.indicateMissingConfiguration(resolveAttempted = true, wouldHaveUsedOfficialServer = false)
@@ -1407,6 +1429,7 @@ class MainActivity : AbstractBaseActivity(), ConnectionFactory.UpdateListener {
         const val SNACKBAR_TAG_SHORTCUT_INFO = "shortcutInfo"
         const val SNACKBAR_TAG_SERVER_MISSING = "serverMissing"
         const val SNACKBAR_TAG_SWITCHED_SERVER = "switchedServer"
+        const val SNACKBAR_TAG_NEW_SERVER_WIFI = "bindServerToWifi"
 
         private const val STATE_KEY_SERVER_PROPERTIES = "serverProperties"
         private const val STATE_KEY_SITEMAP_SELECTION_SHOWN = "isSitemapSelectionDialogShown"

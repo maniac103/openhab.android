@@ -439,6 +439,8 @@
     <string name="resolving_openhab">Trying to discover openHAB server instance\u2026</string>
     <string name="waiting_for_wifi">Waiting for Wi-Fi to establish connection\u2026</string>
     <string name="visit_status_openhab_org">Visit status.openhab.org</string>
+    <string name="bind_server_to_wifi">You can bind your local server to the Wi-Fi network \'$1%s\' so it gets switched to when opening the app in that network.</string>
+    <string name="bind_button">Bind to nwtwork</string>
 
     <!-- Log -->
     <string name="log">Log</string>

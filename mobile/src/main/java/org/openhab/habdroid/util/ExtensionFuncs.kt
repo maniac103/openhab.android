@@ -459,12 +459,10 @@ fun Uri.Builder.appendQueryParameter(key: String, value: Boolean): Uri.Builder {
     return appendQueryParameter(key, value.toString())
 }
 
-fun ServiceInfo.addToPrefs(context: Context) {
+fun ServiceInfo.addToPrefs(context: Context): Int {
     val address = hostAddresses[0]
     val port = port.toString()
     Log.d(Util.TAG, "Service resolved: $address port: $port")
-
-    val wifiSsid = context.getCurrentWifiSsid()
 
     val config = ServerConfiguration(
         context.getPrefs().getNextAvailableServerId(),
@@ -473,9 +471,10 @@ fun ServiceInfo.addToPrefs(context: Context) {
         null,
         null,
         null,
-        wifiSsid
+        null
     )
     config.saveToPrefs(context.getPrefs(), context.getSecretPrefs())
+    return config.id
 }
 
 fun Intent.isResolvable(context: Context): Boolean {
