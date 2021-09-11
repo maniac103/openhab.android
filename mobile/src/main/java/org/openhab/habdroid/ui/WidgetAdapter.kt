@@ -50,7 +50,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.flask.colorpicker.ColorPickerView
 import com.flask.colorpicker.OnColorChangedListener
 import com.flask.colorpicker.OnColorSelectedListener
-import com.google.android.exoplayer2.ExoPlaybackException
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.PlaybackException
 import com.google.android.exoplayer2.SimpleExoPlayer
@@ -1396,16 +1395,31 @@ class WidgetAdapter(
             val viewTypeCurrentPos = adapter?.getItemViewType(position) ?: return false
 
             return when {
-                // Hide divider after frame widgets
-                viewTypeCurrentPos == TYPE_FRAME -> true
-                // Hide divider before frame widgets and invisible ones
-                position < adapter.itemCount - 1 &&
-                    adapter.getItemViewType(position + 1) in intArrayOf(TYPE_FRAME, TYPE_INVISIBLE) -> true
-                // Hide divider after current widget if it's invisible and previous one was a frame or invisible
-                position > 0 && viewTypeCurrentPos == TYPE_INVISIBLE &&
-                    adapter.getItemViewType(position - 1) in intArrayOf(TYPE_FRAME, TYPE_INVISIBLE) -> true
+                // Hide divider after frame widgets and invisible ones
+                viewTypeCurrentPos in NO_DIVIDER_TYPES -> true
+                // Hide divider if it's the last visible widget
+                isLastVisibleWidget(position, adapter) -> true
                 else -> false
             }
+        }
+
+        private fun isLastVisibleWidget(position: Int, adapter: RecyclerView.Adapter<RecyclerView.ViewHolder>):
+            Boolean {
+                var positionToCheck = position + 1
+
+                while (positionToCheck < adapter.itemCount) {
+                    val viewType = adapter.getItemViewType(positionToCheck)
+                    if (viewType !in NO_DIVIDER_TYPES) {
+                        return false
+                    }
+                    positionToCheck++
+                }
+
+                return true
+            }
+
+        companion object {
+            private val NO_DIVIDER_TYPES = intArrayOf(TYPE_FRAME, TYPE_INVISIBLE)
         }
     }
 
