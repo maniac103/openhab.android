@@ -24,6 +24,8 @@ androidx-biometric = "1.1.0"
 androidx-multidex = "2.0.1"
 androidx-work-manager = "2.11.2"
 androidx-media3 = "1.10.1"
+androidx-lifecycle = "2.10.0"
+androidx-car = "1.7.0"
 
 # Other UI libraries
 google-material = "1.14.0"
@@ -86,6 +88,8 @@ androidx-work-gcm = { module = "androidx.work:work-gcm", version.ref = "androidx
 androidx-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "androidx-media3" }
 androidx-media3-ui = { module = "androidx.media3:media3-ui", version.ref = "androidx-media3" }
 androidx-media3-exoplayer-hls = { module = "androidx.media3:media3-exoplayer-hls", version.ref = "androidx-media3" }
+androidx-car = { module = "androidx.car.app:app", version.ref = "androidx-car" }
+androidx-lifecycle-service = { module = "androidx.lifecycle:lifecycle-service", version.ref="androidx-lifecycle" }
 
 google-material = { module = "com.google.android.material:material", version.ref = "google-material" }
 photoview = { module = "com.github.chrisbanes:PhotoView", version.ref = "photoview" }

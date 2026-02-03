@@ -145,9 +145,11 @@ dependencies {
     implementation libs.androidx.swiperefreshlayout
     implementation libs.androidx.biometric
     implementation libs.androidx.multidex
+    implementation libs.androidx.car
+    implementation libs.androidx.lifecycle.service
     implementation libs.androidx.work.runtime.ktx
     implementation libs.google.material
-
+    
     fullImplementation libs.androidx.work.gcm
 
     implementation libs.encrypted.prefs.ktx
