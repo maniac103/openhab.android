@@ -58,8 +58,10 @@ import org.openhab.habdroid.ui.preference.PreferencesActivity
 import org.openhab.habdroid.util.CrashReportingHelper
 import org.openhab.habdroid.util.HttpClient
 import org.openhab.habdroid.util.PrefKeys
+import org.openhab.habdroid.util.buildBaseSourceId
 import org.openhab.habdroid.util.getHumanReadableErrorMessage
 import org.openhab.habdroid.util.getPrefs
+import org.openhab.habdroid.util.getStringOrEmpty
 import org.openhab.habdroid.util.getWifiManager
 import org.openhab.habdroid.util.isDebugModeEnabled
 import org.openhab.habdroid.util.openInBrowser
@@ -588,10 +590,25 @@ abstract class ContentController protected constructor(private val activity: Mai
     }
 
     private fun makeSitemapFragment(sitemap: Sitemap): WidgetListFragment =
-        WidgetListFragment.withPage(sitemap.homepageLink, sitemap.label)
+        WidgetListFragment.withPage(
+            sitemap.homepageLink,
+            sitemap.label,
+            buildSourceId(sitemap.name, null)
+        )
 
     private fun makePageFragment(page: LinkedPage): WidgetListFragment =
-        WidgetListFragment.withPage(page.link, page.title)
+        WidgetListFragment.withPage(
+            page.link,
+            page.title,
+            buildSourceId(null, page.id)
+        )
+
+    private fun buildSourceId(sitemapName: String?, pageId: String?): String {
+        val baseSourceId = activity.buildBaseSourceId()
+        val actualSitemapName = sitemapName ?: currentSitemap?.name ?: throw IllegalStateException()
+        val pageIdSuffix = pageId?.let { ":$it" } ?: ""
+        return "${baseSourceId}$${actualSitemapName}${pageIdSuffix}"
+    }
 
     internal enum class FragmentUpdateReason {
         PAGE_ENTER,

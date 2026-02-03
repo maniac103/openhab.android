@@ -105,6 +105,7 @@ class WidgetListFragment :
     }
     val displayPageUrl get() = arguments?.getString("displayPageUrl").orEmpty()
     val title get() = titleOverride ?: arguments?.getString("title")
+    private val sourceId get() = arguments?.getString("sourceId") ?: ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -131,7 +132,7 @@ class WidgetListFragment :
 
         val activity = activity as MainActivity
         adapter = activity.connection?.let { conn ->
-            WidgetAdapter(activity, activity.serverProperties!!, conn, this, this)
+            WidgetAdapter(activity, activity.serverProperties!!, conn, sourceId, this, this)
         }
 
         layoutManager = LinearLayoutManager(activity)
@@ -213,7 +214,7 @@ class WidgetListFragment :
     override fun getConnection(): Connection? = adapter?.connection
 
     override fun showBottomSheet(sheet: AbstractWidgetBottomSheet, widget: Widget) {
-        sheet.arguments = AbstractWidgetBottomSheet.createArguments(widget)
+        sheet.arguments = AbstractWidgetBottomSheet.createArguments(widget, sourceId)
         sheet.show(childFragmentManager, "${sheet.javaClass.simpleName}-${widget.id}")
     }
 
@@ -677,11 +678,12 @@ class WidgetListFragment :
         private const val CONTEXT_MENU_ID_WRITE_CUSTOM_TAG = 10000
         private const val CONTEXT_MENU_ID_WRITE_DEVICE_ID = 10001
 
-        fun withPage(pageUrl: String, pageTitle: String?): WidgetListFragment {
+        fun withPage(pageUrl: String, pageTitle: String?, sourceId: String): WidgetListFragment {
             val fragment = WidgetListFragment()
             fragment.arguments = bundleOf(
                 "displayPageUrl" to pageUrl,
-                "title" to pageTitle
+                "title" to pageTitle,
+                "sourceId" to sourceId
             )
             return fragment
         }

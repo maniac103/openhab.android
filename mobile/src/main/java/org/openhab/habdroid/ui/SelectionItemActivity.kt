@@ -27,6 +27,7 @@ import org.openhab.habdroid.databinding.ActivitySelectionItemBinding
 import org.openhab.habdroid.databinding.SelectionItemBinding
 import org.openhab.habdroid.model.Item
 import org.openhab.habdroid.model.LabeledValue
+import org.openhab.habdroid.util.buildBaseSourceId
 import org.openhab.habdroid.util.orDefaultIfEmpty
 import org.openhab.habdroid.util.parcelable
 
@@ -98,7 +99,11 @@ class SelectionAdapter(context: Context, val item: Item) : RecyclerView.Adapter<
                     val connection = ConnectionFactory.primaryUsableConnection?.connection ?: return@setOnClickListener
                     adapter?.itemState = option.value
                     adapter?.notifyDataSetChanged()
-                    connection.httpClient.sendItemCommand(item, option.value)
+                    connection.httpClient.sendItemCommand(
+                        item,
+                        option.value,
+                        binding.root.context.buildBaseSourceId()
+                    )
                 }
             }
         }
