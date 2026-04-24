@@ -143,7 +143,7 @@ class ChartWidgetActivity : AbstractBaseActivity() {
             val dataPeriodHours = Duration.between(data.startTime, data.timestamp).toHours()
             val pointsPerHour = data.data.size * data.data[0].dataPoints.size / dataPeriodHours
             val now = LocalDateTime.now()
-            DURATION_MENU_MAPPING.forEach { itemId, period ->
+            DURATION_MENU_MAPPING.forEach { (itemId, period) ->
                 val periodInHours = Duration.between(now.minus(period), now).toHours()
                 menu.findItem(itemId).isVisible = pointsPerHour * periodInHours < DATA_POINT_LIMIT
             }
@@ -325,8 +325,8 @@ class ChartWidgetActivity : AbstractBaseActivity() {
         val padding = 4F // dp
 
         setTouchEnabled(true)
-        setDragDecelerationFrictionCoef(0.9f)
-        setDragEnabled(true)
+        dragDecelerationFrictionCoef = 0.9f
+        isDragEnabled = true
         isScaleXEnabled = true
         isScaleYEnabled = false
 
@@ -380,9 +380,9 @@ class ChartWidgetActivity : AbstractBaseActivity() {
             }
             LineDataSet(values, series.name).apply {
                 setDrawCircles(false)
-                setColor(seriesColors[index % seriesColors.size])
                 setDrawCircleHole(false)
                 setDrawValues(false)
+                color = seriesColors[index % seriesColors.size]
                 lineWidth = 1F
                 mode = if (widget.interpolation == Widget.Interpolation.Step) {
                     LineDataSet.Mode.STEPPED
@@ -518,7 +518,7 @@ class ChartWidgetActivity : AbstractBaseActivity() {
             period.startsWith('P') -> period
             period == "h" || period == "H" -> "PT1H"
             period.length == 1 -> "P1$period"
-            period.endsWith("H", ignoreCase = true) -> "PT${period.substring(0, period.length - 1)}H"
+            period.endsWith("H", ignoreCase = true) -> "PT${period.dropLast(1)}H"
             else -> "P$period"
         }
         return try {

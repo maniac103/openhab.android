@@ -460,7 +460,7 @@ class PageConnectionHolderFragment :
             }
         }
 
-        private class EventHelper internal constructor(
+        private class EventHelper(
             private val scope: CoroutineScope,
             private val client: HttpClient,
             private val sitemap: String,

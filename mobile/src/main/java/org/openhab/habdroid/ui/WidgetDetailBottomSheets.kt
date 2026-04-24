@@ -158,7 +158,7 @@ class ColorTemperatureSliderBottomSheet :
 class SelectionBottomSheet : AbstractWidgetBottomSheet() {
     private lateinit var binding: BottomSheetSelectionBinding
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         binding = BottomSheetSelectionBinding.inflate(inflater, container, false)
         val stateString = widget.state?.asString
         for (mapping in widget.mappingsOrItemOptions) {

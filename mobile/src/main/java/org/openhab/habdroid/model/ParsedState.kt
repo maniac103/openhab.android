@@ -22,6 +22,7 @@ import java.time.format.DateTimeParseException
 import java.util.IllegalFormatException
 import java.util.Locale
 import java.util.regex.Pattern
+import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlinx.parcelize.Parcelize
 import org.openhab.habdroid.util.asColorTemperatureToKelvin
@@ -76,7 +77,7 @@ data class ParsedState internal constructor(
 
                 else -> {
                     val spacePos = state.indexOf(' ')
-                    val number = if (spacePos >= 0) state.substring(0, spacePos) else state
+                    val number = if (spacePos >= 0) state.take(spacePos) else state
                     val unit = if (spacePos >= 0) state.substring(spacePos + 1) else null
                     try {
                         return NumberState(number.toFloat(), unit, format)
@@ -124,7 +125,7 @@ data class ParsedState internal constructor(
                     }
                     // Do our best to avoid parsing e.g. HSV values into location by
                     // sanity checking the values
-                    if (Math.abs(l.latitude) <= 90 && Math.abs(l.longitude) <= 180) {
+                    if (abs(l.latitude) <= 90 && abs(l.longitude) <= 180) {
                         return l
                     }
                 } catch (e: NumberFormatException) {

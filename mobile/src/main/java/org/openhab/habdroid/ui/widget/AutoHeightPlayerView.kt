@@ -15,9 +15,10 @@ package org.openhab.habdroid.ui.widget
 
 import android.content.Context
 import android.util.AttributeSet
-import android.view.View
+import androidx.annotation.OptIn
 import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 
@@ -37,10 +38,11 @@ class AutoHeightPlayerView(context: Context, attrs: AttributeSet) :
         requestLayout()
     }
 
+    @OptIn(UnstableApi::class)
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val size = currentPlayer?.videoFormat ?: return super.onMeasure(widthMeasureSpec, heightMeasureSpec)
 
-        val measuredWidth = View.resolveSize(0, widthMeasureSpec)
+        val measuredWidth = resolveSize(0, widthMeasureSpec)
         val measuredHeight = (measuredWidth.toDouble() * size.height / size.width).toInt()
         val newHeightMeasureSpec = MeasureSpec.makeMeasureSpec(measuredHeight, MeasureSpec.getMode(widthMeasureSpec))
         super.onMeasure(widthMeasureSpec, newHeightMeasureSpec)

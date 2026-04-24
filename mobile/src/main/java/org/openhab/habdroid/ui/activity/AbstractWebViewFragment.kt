@@ -188,7 +188,7 @@ abstract class AbstractWebViewFragment :
 
                 override fun onPermissionRequest(request: PermissionRequest) {
                     val requestedPerms = request.resources
-                        .map { res -> PERMISSION_REQUEST_MAPPING.get(res) }
+                        .map { res -> PERMISSION_REQUEST_MAPPING[res] }
                         .filterNotNull()
                         .flatten()
                         .toTypedArray()

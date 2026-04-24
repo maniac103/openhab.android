@@ -13,6 +13,7 @@
 
 package org.openhab.habdroid.ui
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
@@ -37,6 +38,7 @@ class ItemPickerAdapter(context: Context, private val itemClickListener: ItemCli
         fun onItemClicked(item: Item)
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     fun setItems(items: List<Item>) {
         filteredItems.clear()
         filteredItems.addAll(items)
@@ -46,6 +48,7 @@ class ItemPickerAdapter(context: Context, private val itemClickListener: ItemCli
         notifyDataSetChanged()
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     fun filter(filter: String) {
         filteredItems.clear()
         val searchTerm = filter.lowercase(Locale.getDefault())
@@ -57,6 +60,7 @@ class ItemPickerAdapter(context: Context, private val itemClickListener: ItemCli
         notifyDataSetChanged()
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     fun clear() {
         filteredItems.clear()
         notifyDataSetChanged()

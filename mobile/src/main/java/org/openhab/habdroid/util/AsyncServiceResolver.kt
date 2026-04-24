@@ -54,7 +54,7 @@ class AsyncServiceResolver(context: Context, private val serviceType: String, pr
                     val inetAddress = enumIpAddr.nextElement()
                     Log.i(TAG, "IP: ${inetAddress.hostAddress}")
                     if (!inetAddress.isLoopbackAddress && inetAddress is Inet4Address) {
-                        Log.i(TAG, "Selected ${inetAddress.getHostAddress()}")
+                        Log.i(TAG, "Selected ${inetAddress.hostAddress}")
                         return inetAddress
                     }
                 }

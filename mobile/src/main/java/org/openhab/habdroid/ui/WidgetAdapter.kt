@@ -218,6 +218,7 @@ class WidgetAdapter(
         }
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     fun setCompactMode(compactMode: Boolean) {
         if (compactMode != this.compactMode) {
             this.compactMode = compactMode

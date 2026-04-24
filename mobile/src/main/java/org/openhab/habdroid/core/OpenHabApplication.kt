@@ -171,12 +171,12 @@ class OpenHabApplication : MultiDexApplication() {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
                 return ConnectivityManager.RESTRICT_BACKGROUND_STATUS_DISABLED
             }
-            val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            val cm = context.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
             return cm.restrictBackgroundStatus
         }
 
         fun isBatterySaverActive(context: Context): Boolean {
-            val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+            val pm = context.getSystemService(POWER_SERVICE) as PowerManager
             return pm.isPowerSaveMode
         }
 

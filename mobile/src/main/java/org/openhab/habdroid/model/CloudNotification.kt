@@ -101,7 +101,7 @@ sealed class CloudMessage : Parcelable {
     data class CloudHideNotificationRequest(override val id: CloudNotificationId, val tag: String?) : CloudMessage()
 
     companion object {
-        val TAG = CloudNotification::class.java.simpleName
+        val TAG: String = CloudNotification::class.java.simpleName
     }
 }
 

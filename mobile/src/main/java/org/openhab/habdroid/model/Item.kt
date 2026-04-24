@@ -370,12 +370,12 @@ fun String?.toItemType(): Item.Type {
 
     // Earlier OH2 versions returned e.g. 'Switch' as 'SwitchItem'
     if (type.endsWith("Item")) {
-        type = type.substring(0, type.length - 4)
+        type = type.dropLast(4)
     }
     // types can have subtypes (e.g. 'Number:Temperature'); split off those
     val colonPos = type.indexOf(':')
     if (colonPos > 0) {
-        type = type.substring(0, colonPos)
+        type = type.take(colonPos)
     }
 
     if (type == "String") {

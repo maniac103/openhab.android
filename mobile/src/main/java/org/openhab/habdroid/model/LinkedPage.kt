@@ -28,11 +28,7 @@ import org.w3c.dom.Node
 data class LinkedPage(val id: String, val title: String, val icon: IconResource?, val link: String) : Parcelable {
     companion object {
         internal fun build(id: String, title: String?, icon: IconResource?, link: String): LinkedPage {
-            val actualTitle = if (title != null && title.indexOf('[') > 0) {
-                title.substring(0, title.indexOf('['))
-            } else {
-                title
-            }
+            val actualTitle = title?.substringBefore('[')
             return LinkedPage(id, actualTitle.orEmpty(), icon, link)
         }
     }

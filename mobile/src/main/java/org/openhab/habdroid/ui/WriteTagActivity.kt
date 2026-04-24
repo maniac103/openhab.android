@@ -74,7 +74,7 @@ class WriteTagActivity :
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val manager = getSystemService(Context.NFC_SERVICE) as NfcManager
+        val manager = getSystemService(NFC_SERVICE) as NfcManager
         nfcAdapter = manager.defaultAdapter
 
         if (savedInstanceState == null) {

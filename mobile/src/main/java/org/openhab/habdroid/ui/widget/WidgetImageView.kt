@@ -355,7 +355,7 @@ class WidgetImageView(context: Context, attrs: AttributeSet?, private val imageV
             private val timeoutMillis: Long
         ) {
             private var job: Job? = null
-            private var lastRandomness = Random.Default.nextInt()
+            private var lastRandomness = Random.nextInt()
 
             fun execute(avoidCache: Boolean) {
                 if (job?.isActive == true) {
@@ -372,7 +372,7 @@ class WidgetImageView(context: Context, attrs: AttributeSet?, private val imageV
 
                 val actualUrl = if (addRandomnessToUrl) {
                     if (avoidCache) {
-                        lastRandomness = Random.Default.nextInt()
+                        lastRandomness = Random.nextInt()
                     }
                     url.newBuilder().setQueryParameter("random", lastRandomness.toString()).build()
                 } else {

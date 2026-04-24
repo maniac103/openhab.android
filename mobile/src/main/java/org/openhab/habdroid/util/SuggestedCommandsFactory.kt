@@ -183,7 +183,7 @@ class SuggestedCommandsFactory(private val context: Context, private val showUnd
 
     data class SuggestedCommand(val command: String, val label: String)
 
-    inner class SuggestedCommands {
+    class SuggestedCommands {
         var entries: MutableList<SuggestedCommand> = mutableListOf()
         var shouldShowCustom = false
         var inputTypeFlags = InputType.TYPE_CLASS_TEXT

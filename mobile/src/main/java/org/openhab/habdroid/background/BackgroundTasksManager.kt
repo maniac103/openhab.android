@@ -767,6 +767,7 @@ class BackgroundTasksManager : BroadcastReceiver() {
                 } else {
                     val manager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
 
+                    @SuppressLint("MissingPermission") // We checked permission above
                     val callState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                         manager.callStateForSubscription
                     } else {

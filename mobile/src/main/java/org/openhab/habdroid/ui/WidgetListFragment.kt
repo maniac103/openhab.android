@@ -22,7 +22,6 @@ import android.content.Context
 import android.content.Context.CLIPBOARD_SERVICE
 import android.content.Intent
 import android.content.SharedPreferences
-import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.nfc.NfcAdapter
@@ -75,6 +74,7 @@ import org.openhab.habdroid.util.getPrefs
 import org.openhab.habdroid.util.getStringOrEmpty
 import org.openhab.habdroid.util.openInBrowser
 import org.openhab.habdroid.util.useCompactSitemapLayout
+import androidx.core.graphics.createBitmap
 
 /**
  * This class is apps' main fragment which displays list of openHAB
@@ -192,8 +192,6 @@ class WidgetListFragment :
         for (i in firstVisibleItemPosition..lastVisibleItemPosition) {
             val holder = binding.recyclerview.findViewHolderForAdapterPosition(i)
             if (holder is WidgetAdapter.HeavyDataViewHolder) {
-                holder.handleDataUsagePolicyChange()
-            } else if (holder is WidgetAdapter.AbstractMapViewHolder) {
                 holder.handleDataUsagePolicyChange()
             }
         }
@@ -606,7 +604,7 @@ class WidgetListFragment :
                         .get(linkedPage.icon.toUrl(activity, true))
                         .asBitmap(foregroundSize, iconFallbackColor, ImageConversionPolicy.ForceTargetSize)
                         .response
-                } catch (e: HttpClient.HttpException) {
+                } catch (_: HttpClient.HttpException) {
                     null
                 }
             } else {
@@ -617,11 +615,8 @@ class WidgetListFragment :
             val icon = if (bitmapConfig != null) {
                 val borderSize = activity.resources.dpToPixel(31F)
                 val totalFrameWidth = (borderSize * 2).toInt()
-                val bitmapWithBackground = Bitmap.createBitmap(
-                    iconBitmap.width + totalFrameWidth,
-                    iconBitmap.height + totalFrameWidth,
-                    bitmapConfig
-                )
+                val bitmapWithBackground =
+                    createBitmap(iconBitmap.width + totalFrameWidth, iconBitmap.height + totalFrameWidth, bitmapConfig)
                 with(Canvas(bitmapWithBackground)) {
                     drawColor(if (whiteBackground) Color.WHITE else Color.DKGRAY)
                     drawBitmap(iconBitmap, borderSize, borderSize, null)
@@ -641,7 +636,7 @@ class WidgetListFragment :
                 putExtra(MainActivity.EXTRA_SERVER_ID, activity.getPrefs().getActiveServerId())
             }
 
-            val name = if (linkedPage.title.isEmpty()) activity.getString(R.string.app_name) else linkedPage.title
+            val name = linkedPage.title.ifEmpty { activity.getString(R.string.app_name) }
             val shortcutInfo = ShortcutInfoCompat.Builder(activity, shortSitemapUri + '-' + System.currentTimeMillis())
                 .setShortLabel(name)
                 .setIcon(icon)
@@ -652,13 +647,13 @@ class WidgetListFragment :
             val success = ShortcutManagerCompat.requestPinShortcut(activity, shortcutInfo, null)
             withContext(Dispatchers.Main) {
                 if (success) {
-                    (activity as? MainActivity)?.showSnackbar(
+                    activity.showSnackbar(
                         MainActivity.SNACKBAR_TAG_SHORTCUT_INFO,
                         R.string.home_shortcut_success_pinning,
                         Snackbar.LENGTH_SHORT
                     )
                 } else {
-                    (activity as? MainActivity)?.showSnackbar(
+                    activity.showSnackbar(
                         MainActivity.SNACKBAR_TAG_SHORTCUT_INFO,
                         R.string.home_shortcut_error_pinning,
                         Snackbar.LENGTH_LONG

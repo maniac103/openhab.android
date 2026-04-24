@@ -18,7 +18,6 @@ import android.app.Dialog
 import android.app.PendingIntent
 import android.content.ActivityNotFoundException
 import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
@@ -690,7 +689,7 @@ class MainActivity : AbstractBaseActivity() {
         val anyServerHasSetWifi = allServers
             .any { config -> config?.wifiSsids?.isNotEmpty() == true }
 
-        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
         val requiredPermissions = when {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> {
                 val anyServerIsRestrictedToWifi = allServers.any { config -> config?.restrictToWifiSsids == true }
@@ -1519,7 +1518,7 @@ class MainActivity : AbstractBaseActivity() {
                             Charset.forName("UTF-8")
                         )
                         append("\nUsername: ")
-                        append(credentials.substring(0, credentials.indexOf(":")))
+                        append(credentials.substringBefore(":"))
                     }
 
                     append("\nException stack:\n")

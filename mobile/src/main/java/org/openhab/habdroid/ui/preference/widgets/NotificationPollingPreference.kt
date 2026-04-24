@@ -49,7 +49,7 @@ class NotificationPollingPreference(context: Context, attrs: AttributeSet?) :
         value = getPersistedBoolean(false)
     }
 
-    override fun onGetDefaultValue(a: TypedArray, index: Int): Any? = a.getBoolean(index, false)
+    override fun onGetDefaultValue(a: TypedArray, index: Int): Any = a.getBoolean(index, false)
 
     override fun createDialog(): DialogFragment = PrefDialogFragment.newInstance(key)
 

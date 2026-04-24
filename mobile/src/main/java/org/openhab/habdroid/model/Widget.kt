@@ -277,10 +277,10 @@ fun String?.toWidgetType(): Widget.Type {
 }
 
 fun String?.toInputHint(): Widget.InputTypeHint? = this?.let { value ->
-    try {
-        return Widget.InputTypeHint.valueOf(value.lowercase().replaceFirstChar { c -> c.uppercase() })
-    } catch (e: IllegalArgumentException) {
-        return null
+    return try {
+        Widget.InputTypeHint.valueOf(value.lowercase().replaceFirstChar { c -> c.uppercase() })
+    } catch (_: IllegalArgumentException) {
+        null
     }
 }
 
