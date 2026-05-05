@@ -240,7 +240,6 @@ class TileSettingsFragment :
     private fun setDataFromPrefs() {
         val data = prefs.getTileData(tileId)
         enabledPref.isChecked = data != null
-        @Suppress("SpellCheckingInspection")
         if (data != null) {
             itemAndStatePref.item = data.item
             itemAndStatePref.label = data.label

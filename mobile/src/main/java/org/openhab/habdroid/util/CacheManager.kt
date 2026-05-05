@@ -90,7 +90,7 @@ class CacheManager private constructor(appContext: Context) {
         if (alsoClearIcons) {
             try {
                 httpCache.evictAll()
-            } catch (ignored: IOException) {
+            } catch (_: IOException) {
                 // ignored
             }
             widgetIconDirectory?.listFiles()?.forEach { f -> f.delete() }
@@ -104,7 +104,7 @@ class CacheManager private constructor(appContext: Context) {
                         urlIterator.remove()
                     }
                 }
-            } catch (ignored: IOException) {
+            } catch (_: IOException) {
                 // ignored
             }
         }
@@ -125,7 +125,6 @@ class CacheManager private constructor(appContext: Context) {
     data class CacheKey(val url: HttpUrl, @param:ColorInt val fallbackColor: Int)
 
     companion object {
-        private val TAG = CacheManager::class.java.simpleName
         private var instance: CacheManager? = null
 
         fun getInstance(context: Context): CacheManager {

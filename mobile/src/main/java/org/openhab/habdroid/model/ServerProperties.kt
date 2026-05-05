@@ -103,7 +103,7 @@ data class ServerProperties(val flags: Int, val timezoneId: String?, val sitemap
                     if (version >= 5) {
                         flags = flags or SERVER_FLAG_TRANSPARENT_CHARTS
                     }
-                } catch (nfe: NumberFormatException) {
+                } catch (_: NumberFormatException) {
                     // ignored: older versions without SSE support didn't return a number
                     Log.i(TAG, "Server has rest api version < 1")
                 }

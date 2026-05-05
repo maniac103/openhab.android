@@ -91,7 +91,7 @@ class DayDream :
         moveText()
         val initialText = try {
             ItemClient.loadItem(connection, item)?.state?.asString.orEmpty()
-        } catch (e: HttpClient.HttpException) {
+        } catch (_: HttpClient.HttpException) {
             getString(R.string.screensaver_error_loading_item, item)
         }
         setText(initialText)

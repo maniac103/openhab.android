@@ -389,7 +389,7 @@ class MainSettingsFragment : AbstractSettingsFragment() {
     private fun updateScreenLockStateAndSummary(value: String?) {
         val pref = findPreference<Preference>(PrefKeys.SCREEN_LOCK) ?: return
         val km = ContextCompat.getSystemService(pref.context, KeyguardManager::class.java)!!
-        val locked = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) km.isDeviceSecure else km.isKeyguardSecure
+        val locked = km.isDeviceSecure
         pref.isEnabled = locked
         pref.summary = getString(
             when {
@@ -414,7 +414,7 @@ class MainSettingsFragment : AbstractSettingsFragment() {
             val ringtone = RingtoneManager.getRingtone(activity, newValue)
             pref.summary = try {
                 ringtone?.getTitle(activity)
-            } catch (e: SecurityException) {
+            } catch (_: SecurityException) {
                 getString(R.string.settings_ringtone_on_external)
             }
         }

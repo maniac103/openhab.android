@@ -167,7 +167,7 @@ class WriteTagActivity :
                 ndefFormatable.connect()
                 try {
                     ndefFormatable.format(longMessage)
-                } catch (e: IOException) {
+                } catch (_: IOException) {
                     if (shortMessage != null) {
                         Log.d(TAG, "Try with short uri")
                         ndefFormatable.format(shortMessage)
@@ -196,7 +196,7 @@ class WriteTagActivity :
                     if (ndef.isWritable) {
                         try {
                             ndef.writeNdefMessage(longMessage)
-                        } catch (e: IOException) {
+                        } catch (_: IOException) {
                             if (shortMessage != null) {
                                 Log.d(TAG, "Try with short uri")
                                 ndef.writeNdefMessage(shortMessage)
@@ -308,7 +308,7 @@ class WriteTagActivity :
                 .appendQueryParameter(NfcTag.QUERY_PARAMETER_ITEM_NAME, itemName)
                 .appendQueryParameter(NfcTag.QUERY_PARAMETER_STATE, stateOrUnsupported)
             if (deviceId) {
-                uriBuilder.appendQueryParameter(NfcTag.QUERY_PARAMETER_DEVICE_ID, deviceId)
+                uriBuilder.appendQueryParameter(NfcTag.QUERY_PARAMETER_DEVICE_ID, true)
             }
 
             val shortUri = uriBuilder.build()

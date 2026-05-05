@@ -138,7 +138,7 @@ fun SharedPreferences.getIconResource(key: String): IconResource? {
         val isOh2 = obj.getInt("ohversion") == 2
         val customState = obj.optString("state")
         IconResource(icon, isOh2, customState)
-    } catch (e: JSONException) {
+    } catch (_: JSONException) {
         null
     }
 }

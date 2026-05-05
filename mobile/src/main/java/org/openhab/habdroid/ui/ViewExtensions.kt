@@ -20,7 +20,6 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.webkit.WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
 import android.webkit.WebView
-import android.webkit.WebViewDatabase
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.RemoteViews
@@ -28,7 +27,6 @@ import androidx.appcompat.widget.TooltipCompat
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.net.toUri
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import okhttp3.HttpUrl
 import org.openhab.habdroid.R
 import org.openhab.habdroid.core.connection.Connection
 import org.openhab.habdroid.util.openInBrowser

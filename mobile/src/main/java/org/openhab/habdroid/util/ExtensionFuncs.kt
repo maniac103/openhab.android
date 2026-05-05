@@ -99,6 +99,10 @@ import org.openhab.habdroid.model.ServerProperties
 import org.openhab.habdroid.util.Util.TAG
 import org.w3c.dom.Node
 import org.w3c.dom.NodeList
+import androidx.core.graphics.scale
+import androidx.core.graphics.createBitmap
+import androidx.core.view.size
+import androidx.core.view.get
 
 fun Throwable?.hasCause(cause: Class<out Throwable>): Boolean {
     var error = this
@@ -134,7 +138,7 @@ fun String?.toNormalizedUrl(): String? {
             .toHttpUrl()
             .toString()
         if (url.endsWith("/")) url else "$url/"
-    } catch (e: IllegalArgumentException) {
+    } catch (_: IllegalArgumentException) {
         Log.d(TAG, "toNormalizedUrl(): Invalid URL '$this'")
         null
     }
@@ -149,7 +153,7 @@ fun Uri?.openInBrowser(context: Context) {
     val intent = Intent(Intent.ACTION_VIEW, this)
     try {
         context.startActivity(intent)
-    } catch (e: ActivityNotFoundException) {
+    } catch (_: ActivityNotFoundException) {
         Log.d(TAG, "Unable to open url in browser: $intent")
         context.showToast(R.string.error_no_browser_found, Toast.LENGTH_LONG)
     }
@@ -231,9 +235,9 @@ fun ResponseBody.toBitmap(
         return if (bitmap.byteCount > 20000000 && bitmap.width > targetSize) {
             val scaler = bitmap.width.toFloat() / targetSize.toFloat()
             val scaledHeight = bitmap.height.toFloat() / scaler
-            Bitmap.createScaledBitmap(bitmap, targetSize, scaledHeight.toInt(), true)
+            bitmap.scale(targetSize, scaledHeight.toInt())
         } else if (conversionPolicy == ImageConversionPolicy.ForceTargetSize) {
-            Bitmap.createScaledBitmap(bitmap, targetSize, targetSize, true)
+            bitmap.scale(targetSize, targetSize)
         } else {
             bitmap
         }
@@ -303,7 +307,7 @@ fun InputStream.svgToBitmap(
         }
     }
 
-    val bitmap = Bitmap.createBitmap(round(docWidth).toInt(), round(docHeight).toInt(), Bitmap.Config.ARGB_8888)
+    val bitmap = createBitmap(round(docWidth).toInt(), round(docHeight).toInt())
     val canvas = Canvas(bitmap)
     if (density != null) {
         canvas.scale(density, density)
@@ -344,7 +348,7 @@ fun JSONObject.optStringOrFallback(key: String, fallback: String?): String? = if
 
 fun String.toJsonArrayOrNull() = try {
     JSONArray(this)
-} catch (e: Exception) {
+} catch (_: Exception) {
     null
 }
 
@@ -415,7 +419,7 @@ fun Context.getHumanReadableErrorMessage(url: String, httpCode: Int, error: Thro
             try {
                 val resName = if (short) "error_short_http_code_$httpCode" else "error_http_code_$httpCode"
                 getString(resources.getIdentifier(resName, "string", packageName), httpCode)
-            } catch (e: Resources.NotFoundException) {
+            } catch (_: Resources.NotFoundException) {
                 getString(
                     if (short) R.string.error_short_http_connection_failed else R.string.error_http_connection_failed,
                     httpCode
@@ -431,7 +435,7 @@ fun Context.openInAppStore(app: String) {
     val intent = Intent(Intent.ACTION_VIEW, "market://details?id=$app".toUri())
     try {
         startActivity(intent)
-    } catch (e: ActivityNotFoundException) {
+    } catch (_: ActivityNotFoundException) {
         "http://play.google.com/store/apps/details?id=$app".toUri().openInBrowser(this)
     }
 }
@@ -457,23 +461,19 @@ fun Context.determineDataUsagePolicy(conn: Connection? = null): DataUsagePolicy 
 
     val dataSaverPref = getPrefs().getBoolean(PrefKeys.DATA_SAVER, false)
     if (dataSaverPref || Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-        canDoLargeTransfers = canDoLargeTransfers && !dataSaverPref
-        loadIconsWithState = loadIconsWithState && !dataSaverPref
+        canDoLargeTransfers = !dataSaverPref
+        loadIconsWithState = !dataSaverPref
         autoPlayVideos = autoPlayVideos && !dataSaverPref
         canDoRefreshes = canDoRefreshes && !dataSaverPref
-    } else {
-        val isMetered = conn is DefaultConnection && conn.isMetered
-        val dataSaverState = appContext.systemDataSaverStatus
-
-        when {
-            dataSaverState == ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED && isMetered -> {
+    } else if (conn is DefaultConnection && conn.isMetered) {
+        when (appContext.systemDataSaverStatus) {
+            ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED -> {
                 canDoLargeTransfers = false
                 loadIconsWithState = false
                 autoPlayVideos = false
                 canDoRefreshes = false
             }
-
-            dataSaverState == ConnectivityManager.RESTRICT_BACKGROUND_STATUS_WHITELISTED && isMetered -> {
+            ConnectivityManager.RESTRICT_BACKGROUND_STATUS_WHITELISTED -> {
                 autoPlayVideos = false
             }
         }
@@ -670,8 +670,8 @@ fun ServiceInfo.addToPrefs(context: Context) {
  */
 fun Float.beautify() = if (this == this.toInt().toFloat()) this.toInt().toString() else this.toString()
 
-fun Menu.getGroupItems(groupId: Int): List<MenuItem> = (0 until size())
-    .map { index -> getItem(index) }
+fun Menu.getGroupItems(groupId: Int): List<MenuItem> = (0 until size)
+    .map { index -> this[index] }
     .filter { item -> item.groupId == groupId }
 
 fun PackageManager.isInstalled(app: String): Boolean = try {
@@ -682,14 +682,8 @@ fun PackageManager.isInstalled(app: String): Boolean = try {
     } else {
         getApplicationInfo(app, 0)?.enabled == true
     }
-} catch (e: PackageManager.NameNotFoundException) {
+} catch (_: PackageManager.NameNotFoundException) {
     false
-}
-
-val PendingIntent_Immutable = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-    PendingIntent.FLAG_IMMUTABLE
-} else {
-    0
 }
 
 val PendingIntent_Mutable = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {

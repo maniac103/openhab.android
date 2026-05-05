@@ -80,7 +80,7 @@ sealed class CloudMessage : Parcelable {
                     val dataString = itemStateFromMedia.substring(itemStateFromMedia.indexOf(",") + 1)
                     val data = Base64.decode(dataString, Base64.DEFAULT)
                     BitmapFactory.decodeByteArray(data, 0, data.size)
-                } catch (e: IllegalArgumentException) {
+                } catch (_: IllegalArgumentException) {
                     null
                 }
             }
@@ -120,7 +120,7 @@ fun JSONObject.toCloudMessage(): CloudMessage? {
                 format.timeZone = TimeZone.getTimeZone("UTC")
                 try {
                     format.parse(getString("created"))?.time ?: 0L
-                } catch (e: ParseException) {
+                } catch (_: ParseException) {
                     0L
                 }
             } else {

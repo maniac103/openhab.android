@@ -171,9 +171,7 @@ abstract class AbstractWebViewFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         webView?.apply {
             // Make sure not to pass window insets into the WebView, we already handle them in the activity
-            ViewCompat.setOnApplyWindowInsetsListener(this) { v, insets ->
-                WindowInsetsCompat.CONSUMED
-            }
+            ViewCompat.setOnApplyWindowInsetsListener(this) { _, _ -> WindowInsetsCompat.CONSUMED }
 
             settings.mediaPlaybackRequiresUserGesture = false
             webChromeClient = object : WebChromeClient() {

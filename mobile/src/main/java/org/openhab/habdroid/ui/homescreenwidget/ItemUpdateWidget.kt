@@ -21,7 +21,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.SharedPreferences
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Bundle
@@ -53,7 +52,6 @@ import org.openhab.habdroid.util.HttpClient
 import org.openhab.habdroid.util.IconBackground
 import org.openhab.habdroid.util.ImageConversionPolicy
 import org.openhab.habdroid.util.ItemClient
-import org.openhab.habdroid.util.PendingIntent_Immutable
 import org.openhab.habdroid.util.dpToPixel
 import org.openhab.habdroid.util.getConnectionFactory
 import org.openhab.habdroid.util.getIconFallbackColor
@@ -63,6 +61,7 @@ import org.openhab.habdroid.util.isSvg
 import org.openhab.habdroid.util.parcelable
 import org.openhab.habdroid.util.showToast
 import org.openhab.habdroid.util.svgToBitmap
+import androidx.core.graphics.scale
 
 open class ItemUpdateWidget : AppWidgetProvider() {
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
@@ -159,14 +158,14 @@ open class ItemUpdateWidget : AppWidgetProvider() {
         }
 
         val itemUpdatePendingIntent =
-            PendingIntent.getBroadcast(context, appWidgetId, itemUpdateIntent, PendingIntent_Immutable)
+            PendingIntent.getBroadcast(context, appWidgetId, itemUpdateIntent, PendingIntent.FLAG_IMMUTABLE)
 
         val editIntent = Intent(context, ItemUpdateWidget::class.java).apply {
             action = ACTION_EDIT_WIDGET
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }
 
-        val editPendingIntent = PendingIntent.getBroadcast(context, appWidgetId, editIntent, PendingIntent_Immutable)
+        val editPendingIntent = PendingIntent.getBroadcast(context, appWidgetId, editIntent, PendingIntent.FLAG_IMMUTABLE)
 
         GlobalScope.launch {
             val itemState = if (data.showState) {
@@ -178,7 +177,7 @@ open class ItemUpdateWidget : AppWidgetProvider() {
                             else -> item?.state?.asString
                         }
                     }
-                } catch (e: HttpClient.HttpException) {
+                } catch (_: HttpClient.HttpException) {
                     Log.e(TAG, "Failed to load state of item ${data.item}")
                     null
                 }
@@ -250,7 +249,7 @@ open class ItemUpdateWidget : AppWidgetProvider() {
                             Log.w(TAG, "Failed to set icon, attempt #$retryCount", iae)
                             val newWidth = iconBitmap.width / 2
                             val newHeight = iconBitmap.height / 2
-                            iconBitmap = Bitmap.createScaledBitmap(iconBitmap, newWidth, newHeight, true)
+                            iconBitmap = iconBitmap.scale(newWidth, newHeight)
                             // The view object keeps the previous bitmap when setting a new one, so we need to reset
                             // it to its version without bitmap, as otherwise its size would never decrease.
                             viewsWithIcon = views.duplicate()

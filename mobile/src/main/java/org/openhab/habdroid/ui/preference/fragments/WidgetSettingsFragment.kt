@@ -30,7 +30,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
 import androidx.preference.EditTextPreference
-import androidx.preference.ListPreference
 import androidx.preference.SwitchPreferenceCompat
 import com.google.android.material.snackbar.Snackbar
 import org.openhab.habdroid.R
@@ -53,7 +52,6 @@ class WidgetSettingsFragment :
     private lateinit var itemAndStatePref: ItemAndStatePreference
     private lateinit var namePref: CustomInputTypePreference
     private lateinit var showStatePref: SwitchPreferenceCompat
-    private lateinit var themePref: ListPreference
     private var itemAndStatePrefCallback = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->

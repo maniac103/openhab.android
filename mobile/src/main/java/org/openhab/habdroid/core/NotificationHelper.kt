@@ -13,7 +13,6 @@
 
 package org.openhab.habdroid.core
 
-import android.annotation.TargetApi
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -23,6 +22,7 @@ import android.content.Intent
 import android.os.Build
 import android.service.notification.StatusBarNotification
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -37,7 +37,6 @@ import org.openhab.habdroid.ui.MainActivity
 import org.openhab.habdroid.util.HttpClient
 import org.openhab.habdroid.util.IconBackground
 import org.openhab.habdroid.util.ImageConversionPolicy
-import org.openhab.habdroid.util.PendingIntent_Immutable
 import org.openhab.habdroid.util.determineDataUsagePolicy
 import org.openhab.habdroid.util.getConnectionFactory
 import org.openhab.habdroid.util.getIconFallbackColor
@@ -141,7 +140,6 @@ class NotificationHelper(private val context: Context) {
         }
     }
 
-    @TargetApi(23)
     private fun countCloudNotifications(active: Array<StatusBarNotification>): Int =
         active.count { n -> n.id != 0 && (n.groupKey?.endsWith("gcm") == true) }
 
@@ -238,7 +236,7 @@ class NotificationHelper(private val context: Context) {
         }
     }
 
-    @TargetApi(24)
+    @RequiresApi(24)
     fun makeSummaryNotification(subNotificationCount: Int, timestamp: Long, deleteIntent: PendingIntent): Notification {
         val text = context.resources.getQuantityString(
             R.plurals.summary_notification_text,
@@ -276,7 +274,7 @@ class NotificationHelper(private val context: Context) {
             context,
             notificationId,
             contentIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent_Immutable
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
     }
 

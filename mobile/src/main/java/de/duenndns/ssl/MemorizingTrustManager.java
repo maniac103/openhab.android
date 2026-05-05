@@ -624,7 +624,7 @@ public class MemorizingTrustManager implements X509TrustManager {
             master,
             0,
             intent,
-            ExtensionFuncsKt.getPendingIntent_Immutable()
+            PendingIntent.FLAG_IMMUTABLE
         );
         final String mtmNotification = master.getString(R.string.mtm_notification);
         final long currentMillis = System.currentTimeMillis();

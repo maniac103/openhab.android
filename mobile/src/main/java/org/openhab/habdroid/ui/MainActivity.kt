@@ -120,7 +120,6 @@ import org.openhab.habdroid.util.HttpClient
 import org.openhab.habdroid.util.IconBackground
 import org.openhab.habdroid.util.ImageConversionPolicy
 import org.openhab.habdroid.util.ItemClient
-import org.openhab.habdroid.util.PendingIntent_Immutable
 import org.openhab.habdroid.util.PrefKeys
 import org.openhab.habdroid.util.ScreenLockMode
 import org.openhab.habdroid.util.Util
@@ -426,7 +425,7 @@ class MainActivity : AbstractBaseActivity() {
         if (nfcAdapter != null) {
             val intent = Intent(this, javaClass)
                 .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            val pi = PendingIntent.getActivity(this, 0, intent, PendingIntent_Immutable)
+            val pi = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
             nfcAdapter.enableForegroundDispatch(this, pi, null, null)
         }
 
@@ -449,13 +448,13 @@ class MainActivity : AbstractBaseActivity() {
         val nfcAdapter = NfcAdapter.getDefaultAdapter(this)
         try {
             nfcAdapter?.disableForegroundDispatch(this)
-        } catch (e: IllegalStateException) {
+        } catch (_: IllegalStateException) {
             // See #1776
         }
 
         try {
             unregisterReceiver(backgroundTasksManager)
-        } catch (e: IllegalArgumentException) {
+        } catch (_: IllegalArgumentException) {
             // Receiver isn't registered
         }
     }
@@ -1259,7 +1258,7 @@ class MainActivity : AbstractBaseActivity() {
                     )
                     .response
                     .toDrawable(resources)
-            } catch (e: HttpClient.HttpException) {
+            } catch (_: HttpClient.HttpException) {
                 Log.w(TAG, "Could not fetch icon for sitemap ${sitemap.name}")
             }
         }
@@ -1288,28 +1287,27 @@ class MainActivity : AbstractBaseActivity() {
         setupUiCommandItem()
     }
 
-    private fun executeActionIfPossible(action: PendingAction): Boolean = when {
-        action is PendingAction.ChooseSitemap && isStarted -> {
+    private fun executeActionIfPossible(action: PendingAction): Boolean = when (action) {
+        is PendingAction.ChooseSitemap if isStarted -> {
             chooseSitemap()
             true
         }
 
-        action is PendingAction.OpenSitemapUrl && isStarted && serverProperties != null -> {
+        is PendingAction.OpenSitemapUrl if isStarted && serverProperties != null -> {
             executeActionForServer(action.serverId) { buildUrlAndOpenSitemap(action.url) }
         }
 
-        action is PendingAction.OpenWebViewUi &&
-            isStarted &&
+        is PendingAction.OpenWebViewUi if isStarted &&
             serverProperties?.hasWebViewUiInstalled(action.ui) == true -> {
             executeActionForServer(action.serverId) { openWebViewUi(action.ui, true, action.subpage) }
         }
 
-        action is PendingAction.LaunchVoiceRecognition && serverProperties != null -> {
+        is PendingAction.LaunchVoiceRecognition if serverProperties != null -> {
             launchVoiceRecognition()
             true
         }
 
-        action is PendingAction.OpenNotification && isStarted -> {
+        is PendingAction.OpenNotification if isStarted -> {
             val conn = if (action.primary) {
                 getConnectionFactory().currentPrimary?.cloud
             } else {
@@ -1439,7 +1437,7 @@ class MainActivity : AbstractBaseActivity() {
         val speechIntent = BackgroundTasksManager.buildVoiceRecognitionIntent(this, false)
         try {
             startActivity(speechIntent)
-        } catch (e: ActivityNotFoundException) {
+        } catch (_: ActivityNotFoundException) {
             showSnackbar(
                 SNACKBAR_TAG_NO_VOICE_RECOGNITION_INSTALLED,
                 R.string.error_no_speech_to_text_app_found,
@@ -1750,7 +1748,6 @@ class MainActivity : AbstractBaseActivity() {
     }
 
     companion object {
-        const val ACTION_LINK_OPENED = "org.openhab.habdroid.action.LINK_OPENED"
         const val ACTION_NOTIFICATION_SELECTED = "org.openhab.habdroid.action.NOTIFICATION_SELECTED"
         const val ACTION_HABPANEL_SELECTED = "org.openhab.habdroid.action.HABPANEL_SELECTED"
         const val ACTION_MAIN_UI_SELECTED = "org.openhab.habdroid.action.OH3_UI_SELECTED"

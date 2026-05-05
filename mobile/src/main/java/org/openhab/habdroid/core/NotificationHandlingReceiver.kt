@@ -25,7 +25,6 @@ import org.openhab.habdroid.background.BackgroundTasksManager
 import org.openhab.habdroid.model.CloudNotificationAction
 import org.openhab.habdroid.model.CloudNotificationId
 import org.openhab.habdroid.ui.MainActivity
-import org.openhab.habdroid.util.PendingIntent_Immutable
 
 class NotificationHandlingReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -85,7 +84,7 @@ class NotificationHandlingReceiver : BroadcastReceiver() {
                 context,
                 notificationId,
                 intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent_Immutable
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
         }
 
@@ -106,7 +105,7 @@ class NotificationHandlingReceiver : BroadcastReceiver() {
                     context,
                     notificationId.notificationId + cna.hashCode(),
                     intent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent_Immutable
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
             }
 
@@ -119,7 +118,7 @@ class NotificationHandlingReceiver : BroadcastReceiver() {
                     context,
                     notificationId.notificationId + cna.hashCode(),
                     intent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent_Immutable
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
             }
 
@@ -133,7 +132,7 @@ class NotificationHandlingReceiver : BroadcastReceiver() {
                     context,
                     notificationId.notificationId + cna.hashCode(),
                     intent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent_Immutable
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
             }
         }

@@ -81,7 +81,7 @@ data class ParsedState internal constructor(
                     val unit = if (spacePos >= 0) state.substring(spacePos + 1) else null
                     try {
                         return NumberState(number.toFloat(), unit, format)
-                    } catch (e: NumberFormatException) {
+                    } catch (_: NumberFormatException) {
                         // fall through
                     }
 
@@ -104,7 +104,7 @@ data class ParsedState internal constructor(
                         stateSplit[1].toFloat() / 100,
                         stateSplit[2].toFloat() / 100
                     )
-                } catch (e: NumberFormatException) {
+                } catch (_: NumberFormatException) {
                     // fall through
                 }
             }
@@ -128,7 +128,7 @@ data class ParsedState internal constructor(
                     if (abs(l.latitude) <= 90 && abs(l.longitude) <= 180) {
                         return l
                     }
-                } catch (e: NumberFormatException) {
+                } catch (_: NumberFormatException) {
                     // ignored
                 }
             }
@@ -140,7 +140,7 @@ data class ParsedState internal constructor(
             if (hsbMatcher.find()) {
                 try {
                     return hsbMatcher.group(3)?.toFloat()?.roundToInt()
-                } catch (e: NumberFormatException) {
+                } catch (_: NumberFormatException) {
                     // fall through
                 }
             }
@@ -162,7 +162,7 @@ data class ParsedState internal constructor(
 
         internal fun parseAsDateTime(state: String): LocalDateTime? = try {
             LocalDateTime.parse(state.split(".")[0], DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-        } catch (e: DateTimeParseException) {
+        } catch (_: DateTimeParseException) {
             null
         }
     }
@@ -188,7 +188,7 @@ data class ParsedState internal constructor(
                     .trim()
                 try {
                     return String.format(locale, actualFormat, getActualValue())
-                } catch (e: IllegalFormatException) {
+                } catch (_: IllegalFormatException) {
                     // State format pattern doesn't match the actual data type
                     // -> ignore and fall back to our own formatting
                 }

@@ -33,10 +33,6 @@ class ExtendedSpinner : AppCompatSpinner {
 
     constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-    fun setSelectionWithoutUpdateCallback(position: Int) {
-        super.setSelection(position)
-    }
-
     override fun setSelection(position: Int) {
         super.setSelection(position)
         onSelectionUpdatedListener?.onSelectionUpdated(position)

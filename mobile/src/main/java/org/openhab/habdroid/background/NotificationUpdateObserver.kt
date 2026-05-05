@@ -29,7 +29,6 @@ import androidx.work.WorkInfo
 import org.openhab.habdroid.R
 import org.openhab.habdroid.background.tiles.AbstractTileService
 import org.openhab.habdroid.ui.MainActivity
-import org.openhab.habdroid.util.PendingIntent_Immutable
 import org.openhab.habdroid.util.getHumanReadableErrorMessage
 import org.openhab.habdroid.util.getNotificationTone
 import org.openhab.habdroid.util.getNotificationVibrationPattern
@@ -291,7 +290,7 @@ internal class NotificationUpdateObserver(context: Context) : Observer<List<Work
                     context,
                     0,
                     retryIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent_Immutable
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
                 nb.addAction(
                     NotificationCompat.Action(
@@ -307,7 +306,7 @@ internal class NotificationUpdateObserver(context: Context) : Observer<List<Work
                     context,
                     0,
                     clearIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent_Immutable
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
                 nb.addAction(
                     NotificationCompat.Action(
@@ -328,7 +327,7 @@ internal class NotificationUpdateObserver(context: Context) : Observer<List<Work
                 context,
                 0,
                 notificationIntent,
-                PendingIntent_Immutable
+                PendingIntent.FLAG_IMMUTABLE
             )
 
             return NotificationCompat.Builder(context, channelId)

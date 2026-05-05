@@ -44,7 +44,6 @@ import kotlinx.coroutines.withContext
 import org.openhab.habdroid.R
 import org.openhab.habdroid.core.connection.CloudConnection
 import org.openhab.habdroid.util.HttpClient
-import org.openhab.habdroid.util.PendingIntent_Immutable
 import org.openhab.habdroid.util.Util
 import org.openhab.habdroid.util.getConnectionFactory
 import org.openhab.habdroid.util.parcelable
@@ -156,7 +155,7 @@ class FcmRegistrationWorker(private val context: Context, params: WorkerParamete
                     context,
                     id,
                     wrapped,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent_Immutable
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
             }
         }

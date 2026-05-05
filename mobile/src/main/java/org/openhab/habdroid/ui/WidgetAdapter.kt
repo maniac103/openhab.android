@@ -18,7 +18,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.text.InputType.TYPE_CLASS_NUMBER
 import android.text.InputType.TYPE_CLASS_TEXT
 import android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
@@ -144,6 +143,7 @@ import org.openhab.habdroid.util.orDefaultIfEmpty
 import org.openhab.habdroid.util.resolveThemedColor
 import org.openhab.habdroid.util.resolveThemedColorArray
 import org.openhab.habdroid.util.toColoredRoundedRect
+import androidx.core.graphics.toColorInt
 
 /**
  * This class provides openHAB widgets adapter for list view.
@@ -1944,8 +1944,8 @@ class WidgetAdapter(
             }
             return if (colorName.startsWith("#")) {
                 try {
-                    Color.parseColor(colorName)
-                } catch (e: IllegalArgumentException) {
+                    colorName.toColorInt()
+                } catch (_: IllegalArgumentException) {
                     null
                 }
             } else {

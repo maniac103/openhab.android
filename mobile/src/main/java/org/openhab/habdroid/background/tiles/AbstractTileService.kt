@@ -302,7 +302,7 @@ fun SharedPreferences.getTileData(id: Int): TileData? {
         val icon = obj.getString("icon")
         val requireUnlock = obj.getBoolean("requireUnlock")
         TileData(item, state, label, tileLabel, mappedState, icon, requireUnlock)
-    } catch (e: JSONException) {
+    } catch (_: JSONException) {
         null
     }
 }

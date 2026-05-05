@@ -22,7 +22,6 @@ import android.widget.RemoteViews
 import androidx.annotation.LayoutRes
 import org.openhab.habdroid.R
 import org.openhab.habdroid.background.BackgroundTasksManager
-import org.openhab.habdroid.util.PendingIntent_Immutable
 
 /**
  * Implementation of App Widget functionality.
@@ -38,7 +37,7 @@ open class VoiceWidget : AppWidgetProvider() {
 
             Log.d(TAG, "Build voice recognition intent")
             val intent = BackgroundTasksManager.buildVoiceRecognitionIntent(context, true)
-            val pendingIntent = PendingIntent.getActivity(context, 6, intent, PendingIntent_Immutable)
+            val pendingIntent = PendingIntent.getActivity(context, 6, intent, PendingIntent.FLAG_IMMUTABLE)
             views.setOnClickPendingIntent(android.R.id.background, pendingIntent)
 
             setupOpenhabIcon(context, views)

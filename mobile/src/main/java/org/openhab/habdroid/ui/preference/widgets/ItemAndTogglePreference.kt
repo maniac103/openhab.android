@@ -202,5 +202,5 @@ fun String?.toItemUpdatePrefValue(): Pair<Boolean, String> {
     if (pos == null || pos < 0) {
         return Pair(false, "")
     }
-    return Pair(this!!.substring(0, pos).toBoolean(), substring(pos + 1))
+    return Pair(substring(0, pos).toBoolean(), substring(pos + 1))
 }

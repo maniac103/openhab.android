@@ -29,8 +29,8 @@ object CrashReportingHelper {
             TAG,
             "Crashlytics status: isDebug ${BuildConfig.DEBUG}, isOutdated $isOutdated, isUserEnabled $isUserEnabled"
         )
-        FirebaseCrashlytics.getInstance()
-            .setCrashlyticsCollectionEnabled(!BuildConfig.DEBUG && !isOutdated && isUserEnabled)
+        FirebaseCrashlytics.getInstance().isCrashlyticsCollectionEnabled =
+            !BuildConfig.DEBUG && !isOutdated && isUserEnabled
     }
 
     // Only required for ACRA

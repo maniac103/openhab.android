@@ -68,7 +68,6 @@ import org.openhab.habdroid.model.NfcTag
 import org.openhab.habdroid.ui.TaskerItemPickerActivity
 import org.openhab.habdroid.ui.homescreenwidget.ItemUpdateWidget
 import org.openhab.habdroid.ui.preference.widgets.toItemUpdatePrefValue
-import org.openhab.habdroid.util.PendingIntent_Immutable
 import org.openhab.habdroid.util.PendingIntent_Mutable
 import org.openhab.habdroid.util.PrefKeys
 import org.openhab.habdroid.util.TaskerIntent
@@ -364,24 +363,21 @@ class BackgroundTasksManager : BroadcastReceiver() {
                     }
                 }
                 // This broadcast is only sent to registered receivers, so we need that in any case
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                    prefs.isItemUpdatePrefEnabled(PrefKeys.SEND_DND_MODE)
-                ) {
+                if (prefs.isItemUpdatePrefEnabled(PrefKeys.SEND_DND_MODE)) {
                     addAction(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED)
                 }
             }
         }
 
-        fun getRequiredPermissionsForTask(task: String): Array<String>? = when {
-            task == PrefKeys.SEND_PHONE_STATE -> arrayOf(Manifest.permission.READ_PHONE_STATE)
-
-            task == PrefKeys.SEND_WIFI_SSID && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ->
+        fun getRequiredPermissionsForTask(task: String): Array<String>? = when (task) {
+            PrefKeys.SEND_PHONE_STATE -> arrayOf(Manifest.permission.READ_PHONE_STATE)
+            PrefKeys.SEND_WIFI_SSID if Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ->
                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
 
-            task == PrefKeys.SEND_WIFI_SSID && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ->
+            PrefKeys.SEND_WIFI_SSID if Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ->
                 arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION)
 
-            task == PrefKeys.SEND_BLUETOOTH_DEVICES && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
+            PrefKeys.SEND_BLUETOOTH_DEVICES if Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
                 arrayOf(Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH)
 
             else -> null
@@ -633,7 +629,7 @@ class BackgroundTasksManager : BroadcastReceiver() {
                 context,
                 0,
                 copyIntent,
-                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent_Immutable
+                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
             val copyAction = NotificationCompat.Action.Builder(
@@ -738,9 +734,9 @@ class BackgroundTasksManager : BroadcastReceiver() {
                     SimpleDateFormat("HH:mm yyyy-MM-dd", Locale.US).format(time)
                 }
 
-                val ignoreSender = when {
-                    sender in IGNORED_PACKAGES_FOR_ALARM -> true
-                    sender == null && Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU -> true
+                val ignoreSender = when (sender) {
+                    in IGNORED_PACKAGES_FOR_ALARM -> true
+                    null -> Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
                     else -> false
                 }
 
@@ -839,19 +835,15 @@ class BackgroundTasksManager : BroadcastReceiver() {
                 ItemUpdateWorker.ValueWithInfo(ssidToSend)
             }
             VALUE_GETTER_MAP[PrefKeys.SEND_DND_MODE] = { context, _ ->
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    val nm = context.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-                    val mode = when (nm.currentInterruptionFilter) {
-                        NotificationManager.INTERRUPTION_FILTER_NONE -> "TOTAL_SILENCE"
-                        NotificationManager.INTERRUPTION_FILTER_PRIORITY -> "PRIORITY"
-                        NotificationManager.INTERRUPTION_FILTER_ALARMS -> "ALARMS"
-                        NotificationManager.INTERRUPTION_FILTER_ALL -> "OFF"
-                        else -> "UNDEF"
-                    }
-                    ItemUpdateWorker.ValueWithInfo(mode)
-                } else {
-                    ItemUpdateWorker.ValueWithInfo("UNDEF")
+                val nm = context.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+                val mode = when (nm.currentInterruptionFilter) {
+                    NotificationManager.INTERRUPTION_FILTER_NONE -> "TOTAL_SILENCE"
+                    NotificationManager.INTERRUPTION_FILTER_PRIORITY -> "PRIORITY"
+                    NotificationManager.INTERRUPTION_FILTER_ALARMS -> "ALARMS"
+                    NotificationManager.INTERRUPTION_FILTER_ALL -> "OFF"
+                    else -> "UNDEF"
                 }
+                ItemUpdateWorker.ValueWithInfo(mode)
             }
             VALUE_GETTER_MAP[PrefKeys.SEND_BLUETOOTH_DEVICES] = { context, _ ->
                 fun BluetoothDevice.isConnected(): Boolean = try {
@@ -866,6 +858,7 @@ class BackgroundTasksManager : BroadcastReceiver() {
                     "NO_PERMISSION"
                 } else {
                     val bm = context.getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
+                    @SuppressLint("MissingPermission")
                     bm.adapter.bondedDevices
                         .filter { device -> device.isConnected() }
                         .joinToString("|") { device -> device.address }

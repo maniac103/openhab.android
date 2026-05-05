@@ -16,7 +16,6 @@ package org.openhab.habdroid.util
 import android.graphics.Bitmap
 import android.util.Log
 import androidx.annotation.ColorInt
-import androidx.annotation.VisibleForTesting
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
@@ -54,7 +53,7 @@ class HttpClient(client: OkHttpClient, baseUrl: String?, username: String?, pass
 
     val targetHost get() = baseUrl?.host
 
-    @VisibleForTesting val authHeader: String? = if (!username.isNullOrEmpty()) {
+    val authHeader: String? = if (!username.isNullOrEmpty()) {
         Credentials.basic(username, password.orEmpty(), StandardCharsets.UTF_8)
     } else {
         null

@@ -70,7 +70,6 @@ class SuggestedCommandsFactory(private val context: Context, private val showUnd
         }
 
         item.isOfTypeOrGroupType(Item.Type.Contact) -> {
-            @Suppress("ControlFlowWithEmptyBody")
             if (forItemUpdate) {
                 add(suggestedCommands, "OPEN", R.string.nfc_action_open)
                 add(suggestedCommands, "CLOSED", R.string.nfc_action_closed)

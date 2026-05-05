@@ -13,6 +13,7 @@
 
 package org.openhab.habdroid.ui
 
+import android.annotation.SuppressLint
 import android.net.http.SslCertificate
 import android.net.http.SslError
 import android.security.KeyChain
@@ -84,6 +85,7 @@ open class ConnectionWebViewClient(val connection: Connection) : WebViewClient()
         val mtm = MemorizingTrustManager(context)
         if (cert != null && mtm.isCertKnown(cert)) {
             Log.d(TAG, "Invalid certificate, but the same one as the main connection")
+            @SuppressLint("WebViewClientOnReceivedSslError")
             handler.proceed()
         } else {
             Log.e(TAG, "Invalid certificate")
@@ -142,7 +144,7 @@ open class ConnectionWebViewClient(val connection: Connection) : WebViewClient()
         val bytes = bundle.getByteArray("x509-certificate") ?: return null
         return try {
             CertificateFactory.getInstance("X.509").generateCertificate(ByteArrayInputStream(bytes))
-        } catch (e: CertificateException) {
+        } catch (_: CertificateException) {
             null
         }
     }

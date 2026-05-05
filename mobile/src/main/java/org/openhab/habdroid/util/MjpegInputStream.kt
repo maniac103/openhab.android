@@ -73,7 +73,7 @@ class MjpegInputStream(stream: InputStream) : DataInputStream(BufferedInputStrea
 
         val contentLength = try {
             parseContentLength(header)
-        } catch (nfe: NumberFormatException) {
+        } catch (_: NumberFormatException) {
             getEndOfSequence(this, EOF_MARKER)
         }
 

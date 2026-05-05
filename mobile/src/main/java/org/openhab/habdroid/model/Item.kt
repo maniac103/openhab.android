@@ -386,7 +386,7 @@ fun String?.toItemType(): Item.Type {
     }
     return try {
         Item.Type.valueOf(type)
-    } catch (e: IllegalArgumentException) {
+    } catch (_: IllegalArgumentException) {
         Item.Type.None
     }
 }
@@ -396,7 +396,7 @@ fun String?.toItemTag(): Item.Tag {
 
     try {
         return Item.Tag.valueOf(this)
-    } catch (e: IllegalArgumentException) {
+    } catch (_: IllegalArgumentException) {
         // No 1:1 mapping possible, fall through
     }
 

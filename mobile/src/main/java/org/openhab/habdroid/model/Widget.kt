@@ -269,7 +269,7 @@ fun String?.toWidgetType(): Widget.Type {
     if (this != null) {
         try {
             return Widget.Type.valueOf(this)
-        } catch (e: IllegalArgumentException) {
+        } catch (_: IllegalArgumentException) {
             // fall through
         }
     }
