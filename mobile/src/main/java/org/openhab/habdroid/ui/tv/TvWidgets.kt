@@ -76,9 +76,9 @@ import org.openhab.habdroid.core.connection.Connection
 import org.openhab.habdroid.model.Item
 import org.openhab.habdroid.model.LabeledValue
 import org.openhab.habdroid.model.Widget
+import org.openhab.habdroid.model.toItemCommand
 import org.openhab.habdroid.model.withValue
 import org.openhab.habdroid.ui.shouldRenderAsPlayer
-import org.openhab.habdroid.ui.toItemCommand
 import org.openhab.habdroid.util.beautify
 
 interface TvWidgetActions {
