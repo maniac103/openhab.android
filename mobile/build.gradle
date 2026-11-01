@@ -21,6 +21,7 @@ buildscript {
 
 apply plugin: "com.android.application"
 apply plugin: "kotlin-parcelize"
+apply plugin: "kotlinx-serialization"
 apply plugin: "org.jetbrains.kotlin.plugin.compose"
 apply plugin: "de.mobilej.unmock"
 apply plugin: "com.mikepenz.aboutlibraries.plugin.android"
@@ -186,8 +187,10 @@ dependencies {
     debugImplementation libs.androidx.compose.ui.tooling
     implementation libs.androidx.activity.compose
     implementation libs.androidx.tv.material
-    implementation libs.androidx.navigation.compose
+    implementation libs.androidx.navigation3.runtime
+    implementation libs.androidx.navigation3.ui
     implementation libs.androidx.lifecycle.viewmodel.compose
+    implementation libs.androidx.lifecycle.viewmodel.navigation3
     implementation libs.androidx.lifecycle.runtime.compose
 
     fullImplementation libs.play.services.maps

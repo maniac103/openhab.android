@@ -14,23 +14,38 @@ package org.openhab.habdroid.ui.tv
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.compose.LifecycleStartEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.ui.NavDisplay
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.SurfaceDefaults
+import kotlinx.serialization.Serializable
 import org.openhab.habdroid.core.connection.Connection
 import org.openhab.habdroid.model.DefaultSitemap
 import org.openhab.habdroid.model.ServerConfiguration
 import org.openhab.habdroid.model.ServerPath
 
-object TvRoutes {
-    const val SETUP = "setup"
-    const val SITEMAP = "sitemap"
-    const val SETTINGS = "settings"
-    const val ABOUT = "about"
+sealed interface TvRoute : NavKey {
+    @Serializable
+    object Setup : TvRoute
+    @Serializable
+    object SitemapHome: TvRoute
+    @Serializable
+    data class SitemapPage(val pageUrl: String) : TvRoute
+    @Serializable
+    object Settings : TvRoute
+    @Serializable
+    object About : TvRoute
 }
 
 @Composable
@@ -40,46 +55,76 @@ fun TvApp(
     onSaveServerPath: (ServerPath) -> Unit,
     onSaveDefaultSitemap: (DefaultSitemap) -> Unit
 ) {
-    val navController = rememberNavController()
-    val startDestination = if (config == null) TvRoutes.SETUP else TvRoutes.SITEMAP
+    val session: TvSessionViewModel = viewModel()
+    val backStack = rememberNavBackStack(
+        if (config == null) TvRoute.Setup else TvRoute.SitemapHome
+    )
+
+    LaunchedEffect(config) {
+        session.updateServerConfig(config)
+    }
+    LifecycleStartEffect(session) {
+        session.start()
+        onStopOrDispose { session.stop() }
+    }
+
+    // Sitemap or connection changed -> drop pages that belong to the old one
+    val state by session.state.collectAsStateWithLifecycle()
+    val ready = state as? TvSessionViewModel.State.Ready
+    LaunchedEffect(ready?.sitemap?.name, ready?.connection) {
+        backStack.removeAll { it is TvRoute.SitemapPage }
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
         colors = SurfaceDefaults.colors(containerColor = MaterialTheme.colorScheme.background)
     ) {
-        NavHost(
-            navController = navController,
-            startDestination = startDestination
-        ) {
-            composable(TvRoutes.SETUP) {
-                TvSetupScreen(
-                    onSavePath = { path ->
-                        onSaveServerPath(path)
-                        navController.navigate(TvRoutes.SITEMAP) {
-                            popUpTo(TvRoutes.SETUP) { inclusive = true }
+        NavDisplay(
+            backStack = backStack,
+            entryDecorators = listOf(
+                rememberSaveableStateHolderNavEntryDecorator(),
+                rememberViewModelStoreNavEntryDecorator()
+            ),
+            entryProvider = entryProvider {
+                entry<TvRoute.Setup> {
+                    TvSetupScreen(
+                        onSavePath = { path ->
+                            onSaveServerPath(path)
+                            backStack.clear()
+                            backStack += TvRoute.SitemapHome
                         }
-                    }
-                )
+                    )
+                }
+                entry<TvRoute.SitemapHome> {
+                    TvSitemapRoot(
+                        session = session,
+                        onSaveDefaultSitemap = onSaveDefaultSitemap,
+                        onOpenPage = { backStack += TvRoute.SitemapPage(it.link) },
+                        onOpenSettings = { backStack += TvRoute.Settings }
+                    )
+                }
+                entry<TvRoute.SitemapPage> { key ->
+                    TvSitemapPage(
+                        pageUrl = key.pageUrl,
+                        fallbackTitle = null,
+                        session = session,
+                        onOpenPage = { backStack += TvRoute.SitemapPage(it.link) },
+                        onOpenSettings = { backStack += TvRoute.Settings }
+                    )
+                }
+                entry<TvRoute.Settings> {
+                    TvSettingsScreen(
+                        config = config,
+                        connectionProvider = connectionProvider,
+                        onSavePath = onSaveServerPath,
+                        onSaveDefaultSitemap = onSaveDefaultSitemap,
+                        onOpenAbout = { backStack += TvRoute.About }
+                    )
+                }
+                entry<TvRoute.About> {
+                    TvAboutScreen()
+                }
             }
-            composable(TvRoutes.SITEMAP) {
-                TvSitemapScreen(
-                    config = config,
-                    onSaveDefaultSitemap = onSaveDefaultSitemap,
-                    onOpenSettings = { navController.navigate(TvRoutes.SETTINGS) }
-                )
-            }
-            composable(TvRoutes.SETTINGS) {
-                TvSettingsScreen(
-                    config = config,
-                    connectionProvider = connectionProvider,
-                    onSavePath = onSaveServerPath,
-                    onSaveDefaultSitemap = onSaveDefaultSitemap,
-                    onOpenAbout = { navController.navigate(TvRoutes.ABOUT) }
-                )
-            }
-            composable(TvRoutes.ABOUT) {
-                TvAboutScreen()
-            }
-        }
+        )
     }
 }
