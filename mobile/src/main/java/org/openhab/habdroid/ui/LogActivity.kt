@@ -34,12 +34,9 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.openhab.habdroid.R
 import org.openhab.habdroid.core.OpenHabApplication
 import org.openhab.habdroid.databinding.ActivityLogBinding
-import org.openhab.habdroid.model.ServerConfiguration
 import org.openhab.habdroid.util.HttpClient
 import org.openhab.habdroid.util.determineDataUsagePolicy
-import org.openhab.habdroid.util.getConfiguredServerIds
-import org.openhab.habdroid.util.getPrefs
-import org.openhab.habdroid.util.getSecretPrefs
+import org.openhab.habdroid.util.getPreferences
 
 class LogActivity :
     AbstractBaseActivity(),
@@ -208,21 +205,20 @@ class LogActivity :
         }
 
         val redactions = mutableMapOf<String, String>()
-        getPrefs().getConfiguredServerIds()
-            .mapNotNull { ServerConfiguration.load(getPrefs(), getSecretPrefs(), it) }
+        getPreferences().configuredServers.value
             .forEach { config ->
                 val toRedactableHost = { url: String? ->
                     url?.toHttpUrlOrNull()?.host
                         ?.takeIf { it.isNotEmpty() && !HttpClient.isMyOpenhab(it) }
                 }
-                toRedactableHost(config.localPath?.url)?.let {
+                toRedactableHost(config.localPath.value?.url)?.let {
                     redactions[it] = "<openhab-local-address-${config.name}>"
                 }
-                toRedactableHost(config.remotePath?.url)?.let {
+                toRedactableHost(config.remotePath.value?.url)?.let {
                     redactions[it] = "<openhab-remote-address-${config.name}>"
                 }
-                config.localPath?.userName?.let { redactions[it] = "<local-user-${config.name}" }
-                config.remotePath?.userName?.let { redactions[it] = "<remote-user-${config.name}" }
+                config.localPath.value?.userName?.let { redactions[it] = "<local-user-${config.name}" }
+                config.remotePath.value?.userName?.let { redactions[it] = "<remote-user-${config.name}" }
             }
 
         try {

@@ -27,12 +27,8 @@ import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.content.res.Resources
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Canvas
 import android.graphics.Color
 import android.net.ConnectivityManager
-import android.net.Network
 import android.net.Uri
 import android.net.wifi.WifiManager
 import android.os.Build
@@ -54,9 +50,6 @@ import androidx.core.net.toUri
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
-import androidx.preference.PreferenceManager
-import com.caverock.androidsvg.RenderOptions
-import com.caverock.androidsvg.SVG
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.shape.MaterialShapeDrawable
@@ -64,10 +57,8 @@ import com.google.android.material.shape.RelativeCornerSize
 import com.google.android.material.shape.ShapeAppearanceModel
 import java.io.EOFException
 import java.io.IOException
-import java.io.InputStream
 import java.io.Serializable
 import java.net.ConnectException
-import java.net.Socket
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.security.cert.CertPathValidatorException
@@ -79,32 +70,23 @@ import javax.net.ssl.SSLException
 import javax.net.ssl.SSLHandshakeException
 import javax.net.ssl.SSLPeerUnverifiedException
 import kotlin.math.ln
-import kotlin.math.max
-import kotlin.math.round
 import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import okhttp3.MediaType
-import okhttp3.ResponseBody
-import org.json.JSONArray
-import org.json.JSONObject
+import org.openhab.habdroid.Preferences
 import org.openhab.habdroid.R
 import org.openhab.habdroid.background.BackgroundTasksManager
 import org.openhab.habdroid.core.OpenHabApplication
 import org.openhab.habdroid.core.connection.Connection
 import org.openhab.habdroid.core.connection.ConnectionFactory
 import org.openhab.habdroid.core.connection.DefaultConnection
-import org.openhab.habdroid.model.ServerConfiguration
 import org.openhab.habdroid.model.ServerPath
 import org.openhab.habdroid.model.ServerProperties
 import org.openhab.habdroid.ui.WebViewManager
 import org.openhab.habdroid.util.Util.TAG
-import org.w3c.dom.Node
-import org.w3c.dom.NodeList
 
 fun Throwable?.hasCause(cause: Class<out Throwable>): Boolean {
     var error = this
@@ -191,6 +173,8 @@ fun Int.toColoredRoundedRect(context: Context) = MaterialShapeDrawable.createWit
 fun Resources.dpToPixel(dp: Float): Float = dp * displayMetrics.densityDpi.toFloat() / DisplayMetrics.DENSITY_DEFAULT
 
 fun Context.getSecretPrefs(): SharedPreferences = (applicationContext as OpenHabApplication).secretPrefs
+
+fun Context.getPreferences(): Preferences = (applicationContext as OpenHabApplication).preferences
 
 fun Context.getConnectionFactory(): ConnectionFactory = (applicationContext as OpenHabApplication).connectionFactory
 
@@ -423,11 +407,6 @@ fun Context.getIconFallbackColor(iconBackground: IconBackground) = when (iconBac
     IconBackground.DARK -> ContextCompat.getColor(this, R.color.on_background_default_theme_dark)
 }
 
-fun Context.loadActiveServerConfig(): ServerConfiguration? {
-    val activeServerId = getPrefs().getActiveServerId()
-    return ServerConfiguration.load(getPrefs(), getSecretPrefs(), activeServerId)
-}
-
 fun Activity.shouldUseDynamicColors(): Boolean {
     val colorScheme = getPrefs().getStringOrEmpty(PrefKeys.COLOR_SCHEME)
     return DynamicColors.isDynamicColorAvailable() && colorScheme == getString(R.string.color_scheme_value_dynamic)
@@ -485,24 +464,13 @@ fun Context.getWifiManager(attributionTag: String): WifiManager {
     return context.getSystemService(Context.WIFI_SERVICE) as WifiManager
 }
 
-fun ServiceInfo.addToPrefs(context: Context) {
+suspend fun ServiceInfo.addToPrefs(context: Context) {
     val address = hostAddresses[0]
     val port = port.toString()
     Log.d(TAG, "Service resolved: $address port: $port")
 
-    val config = ServerConfiguration(
-        context.getPrefs().getNextAvailableServerId(),
-        context.getString(R.string.openhab),
-        ServerPath("https://$address:$port", null, null),
-        null,
-        null,
-        null,
-        null,
-        false,
-        null,
-        null
-    )
-    config.saveToPrefs(context.getPrefs(), context.getSecretPrefs())
+    val path = ServerPath("https://$address:$port", null, null)
+    context.getPreferences().createServer(context.getString(R.string.openhab), path, null)
 }
 
 /**

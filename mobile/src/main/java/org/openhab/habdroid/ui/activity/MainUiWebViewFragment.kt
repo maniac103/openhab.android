@@ -18,7 +18,7 @@ import org.openhab.habdroid.R
 import org.openhab.habdroid.core.connection.CloudConnection
 import org.openhab.habdroid.core.connection.Connection
 import org.openhab.habdroid.ui.MainActivity
-import org.openhab.habdroid.util.loadActiveServerConfig
+import org.openhab.habdroid.util.getPreferences
 
 class MainUiWebViewFragment : AbstractWebViewFragment() {
     override val titleRes = R.string.mainmenu_openhab_main_ui
@@ -39,7 +39,7 @@ class MainUiWebViewFragment : AbstractWebViewFragment() {
                 .port(connection.proxyUrl.port)
         }
 
-        val mainUiStartPage = context?.loadActiveServerConfig()?.mainUiStartPage
+        val mainUiStartPage = context?.getPreferences()?.activeServer?.value?.mainUiStartPage?.value
         if (!mainUiStartPage.isNullOrEmpty()) {
             urlBuilder.encodedPath(mainUiStartPage)
         }

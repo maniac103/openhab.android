@@ -40,10 +40,9 @@ import androidx.tv.material3.ListItem
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import org.openhab.habdroid.Preferences
 import org.openhab.habdroid.R
 import org.openhab.habdroid.core.connection.Connection
-import org.openhab.habdroid.model.DefaultSitemap
-import org.openhab.habdroid.model.ServerConfiguration
 import org.openhab.habdroid.model.ServerPath
 import org.openhab.habdroid.model.ServerProperties
 import org.openhab.habdroid.model.Sitemap
@@ -53,18 +52,19 @@ import org.openhab.habdroid.model.Sitemap
  */
 @Composable
 fun TvSettingsScreen(
-    config: ServerConfiguration?,
+    serverPath: ServerPath?,
+    defaultSitemap: Preferences.Server.DefaultSitemap?,
     connectionProvider: () -> Connection?,
     onSavePath: (ServerPath) -> Unit,
-    onSaveDefaultSitemap: (DefaultSitemap) -> Unit,
+    onSaveDefaultSitemap: (Preferences.Server.DefaultSitemap) -> Unit,
     onOpenAbout: () -> Unit
 ) {
     var showSitemapDialog by remember { mutableStateOf(false) }
     val firstItemFocus = remember { FocusRequester() }
 
-    var url by remember(config) { mutableStateOf(config?.localPath?.url.orEmpty()) }
-    var userName by remember(config) { mutableStateOf(config?.localPath?.userName.orEmpty()) }
-    var password by remember(config) { mutableStateOf(config?.localPath?.password.orEmpty()) }
+    var url by remember(serverPath) { mutableStateOf(serverPath?.url.orEmpty()) }
+    var userName by remember(serverPath) { mutableStateOf(serverPath?.userName.orEmpty()) }
+    var password by remember(serverPath) { mutableStateOf(serverPath?.password.orEmpty()) }
 
     val saveServer: () -> Unit = {
         val trimmedUrl = url.trim().toHttpUrlOrNull()
@@ -133,7 +133,7 @@ fun TvSettingsScreen(
                     Text(stringResource(R.string.tv_settings_sitemap))
                 },
                 supportingContent = {
-                    Text(config?.defaultSitemap?.label ?: stringResource(R.string.tv_no_sitemap_selected))
+                    Text(defaultSitemap?.label ?: stringResource(R.string.tv_no_sitemap_selected))
                 }
             )
             ListItem(
@@ -144,7 +144,7 @@ fun TvSettingsScreen(
         }
     }
 
-    if (showSitemapDialog && config != null) {
+    if (showSitemapDialog) {
         val sitemaps by produceState<List<Sitemap>?>(initialValue = null) {
             val connection = connectionProvider()
             value = when (val result = connection?.let { ServerProperties.fetch(it) }) {
@@ -156,10 +156,10 @@ fun TvSettingsScreen(
             TvSelectionDialog(
                 title = stringResource(R.string.tv_settings_sitemap),
                 options = list.map { sitemap -> sitemap.name to sitemap.label },
-                selectedValue = config.defaultSitemap?.name,
+                selectedValue = defaultSitemap?.name,
                 onSelected = { name ->
                     val sitemap = list.first { sitemap -> sitemap.name == name }
-                    onSaveDefaultSitemap(DefaultSitemap(sitemap.name, sitemap.label))
+                    onSaveDefaultSitemap(Preferences.Server.DefaultSitemap(sitemap.name, sitemap.label))
                     showSitemapDialog = false
                 },
                 onDismiss = { showSitemapDialog = false }

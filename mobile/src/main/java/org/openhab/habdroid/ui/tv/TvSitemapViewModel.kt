@@ -16,18 +16,22 @@ import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+import org.openhab.habdroid.Preferences
 import org.openhab.habdroid.R
 import org.openhab.habdroid.core.connection.Connection
 import org.openhab.habdroid.core.connection.ConnectionFactory
 import org.openhab.habdroid.core.sitemap.SitemapPageRepository
 import org.openhab.habdroid.model.Item
 import org.openhab.habdroid.model.LinkedPage
-import org.openhab.habdroid.model.ServerConfiguration
+import org.openhab.habdroid.model.ServerPath
 import org.openhab.habdroid.model.ServerProperties
 import org.openhab.habdroid.model.Sitemap
 import org.openhab.habdroid.model.Widget
@@ -36,13 +40,14 @@ import org.openhab.habdroid.util.HttpClient
 import org.openhab.habdroid.util.buildBaseSourceId
 import org.openhab.habdroid.util.getConnectionFactory
 import org.openhab.habdroid.util.getHumanReadableErrorMessage
+import org.openhab.habdroid.util.getPreferences
 import org.openhab.habdroid.util.getPrefs
 import org.openhab.habdroid.util.isDebugModeEnabled
-import org.openhab.habdroid.util.loadActiveServerConfig
 
 /**
  * Loads the default sitemap of the active server and keeps track of the pages the user navigated to.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class TvSitemapViewModel(application: Application) :
     AndroidViewModel(application),
     SitemapPageRepository.Callback {
@@ -70,10 +75,11 @@ class TvSitemapViewModel(application: Application) :
     private val context get() = getApplication<Application>()
     private val repository = SitemapPageRepository(viewModelScope)
     private var connection: Connection? = null
-    private var lastKnownServerConfig: ServerConfiguration? = null
     private var sitemap: Sitemap? = null
     private val pageStack = mutableListOf<String>()
     private val pages = mutableMapOf<String, PageData>()
+    private var lastKnownServerPath: ServerPath? = null
+    private var defaultSitemap: Preferences.Server.DefaultSitemap? = null
 
     private val _state = MutableStateFlow<State>(State.Loading)
     val state: StateFlow<State> = _state.asStateFlow()
@@ -85,17 +91,26 @@ class TvSitemapViewModel(application: Application) :
 
     init {
         repository.setCallback(this)
-        lastKnownServerConfig = context.loadActiveServerConfig()
         viewModelScope.launch {
             context.getConnectionFactory().activeFlow.collectLatest { info -> onConnectionChanged(info.conn) }
         }
-    }
-
-    fun updateServerConfig(config: ServerConfiguration?) {
-        lastKnownServerConfig = config
-        val activeSitemap = sitemap
-        if (activeSitemap != null && activeSitemap.name != config?.defaultSitemap?.name) {
-            findDefaultSitemap()?.let { showSitemap(it) }
+        viewModelScope.launch {
+            context.getPreferences().activeServer.asFlow()
+                .flatMapLatest { it?.localPath?.asFlow() ?: flowOf(null) }
+                .collectLatest {
+                    lastKnownServerPath = it
+                }
+        }
+        viewModelScope.launch {
+            context.getPreferences().activeServer.asFlow()
+                .flatMapLatest { it?.defaultSitemap?.asFlow() ?: flowOf(null) }
+                .collectLatest { defaultSitemap ->
+                    val activeSitemap = sitemap
+                    this@TvSitemapViewModel.defaultSitemap = defaultSitemap
+                    if (activeSitemap != null && activeSitemap.name != defaultSitemap?.name) {
+                        findDefaultSitemap()?.let { showSitemap(it) }
+                    }
+                }
         }
     }
 
@@ -167,7 +182,7 @@ class TvSitemapViewModel(application: Application) :
         repository.updateActiveConnections(emptyList(), conn)
 
         if (conn == null) {
-            val url = lastKnownServerConfig?.localPath?.url
+            val url = lastKnownServerPath?.url
             _state.value = State.Error(context.getString(R.string.tv_error_connection_failed, url.orEmpty()))
             return
         }
@@ -195,7 +210,7 @@ class TvSitemapViewModel(application: Application) :
             selectedSitemap != null -> showSitemap(selectedSitemap)
 
             sitemaps.isEmpty() -> {
-                _state.value = State.NoSitemaps(lastKnownServerConfig?.localPath?.url)
+                _state.value = State.NoSitemaps(lastKnownServerPath?.url)
             }
 
             // Let the user choose instead of picking one of multiple sitemaps
@@ -207,7 +222,7 @@ class TvSitemapViewModel(application: Application) :
      * @return The configured default sitemap, or null if none is configured or it doesn't exist on the server
      */
     private fun findDefaultSitemap(): Sitemap? {
-        val defaultSitemapName = lastKnownServerConfig?.defaultSitemap?.name ?: return null
+        val defaultSitemapName = defaultSitemap?.name ?: return null
         return serverProperties?.sitemaps?.firstOrNull { sitemap -> sitemap.name == defaultSitemapName }
     }
 

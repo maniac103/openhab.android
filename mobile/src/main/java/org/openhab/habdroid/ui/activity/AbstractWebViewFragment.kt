@@ -61,17 +61,12 @@ import org.openhab.habdroid.core.connection.Connection
 import org.openhab.habdroid.core.connection.DemoConnection
 import org.openhab.habdroid.databinding.BottomSheetShortcutLabelBinding
 import org.openhab.habdroid.databinding.FragmentWebviewBinding
-import org.openhab.habdroid.model.ServerConfiguration
 import org.openhab.habdroid.ui.AbstractBaseActivity
 import org.openhab.habdroid.ui.ConnectionWebViewClient
 import org.openhab.habdroid.ui.MainActivity
-import org.openhab.habdroid.ui.WebViewManager
 import org.openhab.habdroid.ui.setUpForConnection
-import org.openhab.habdroid.util.getActiveServerId
-import org.openhab.habdroid.util.getConfiguredServerIds
 import org.openhab.habdroid.util.getConnectionFactory
-import org.openhab.habdroid.util.getPrefs
-import org.openhab.habdroid.util.getSecretPrefs
+import org.openhab.habdroid.util.getPreferences
 import org.openhab.habdroid.util.getWebViewManager
 import org.openhab.habdroid.util.hasPermissions
 import org.openhab.habdroid.util.isDarkModeActive
@@ -120,7 +115,7 @@ abstract class AbstractWebViewFragment :
         get() {
             val context = requireContext()
             val intent = Intent(context, MainActivity::class.java)
-                .putExtra(MainActivity.EXTRA_SERVER_ID, context.getPrefs().getActiveServerId())
+                .putExtra(MainActivity.EXTRA_SERVER_ID, context.getPreferences().activeServer.value?.id?.value)
                 .setAction(shortcutAction)
 
             webView?.url?.toHttpUrlOrNull()?.let {
@@ -136,14 +131,13 @@ abstract class AbstractWebViewFragment :
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        val prefs = context.getPrefs()
-        val activeServerId = prefs.getActiveServerId()
+        val prefs = context.getPreferences()
         title = context.getString(titleRes)
         if (
-            prefs.getConfiguredServerIds().size > 1 &&
+            prefs.configuredServers.value.size > 1 &&
             context.getConnectionFactory().currentActive?.conn?.connection !is DemoConnection
         ) {
-            val activeServerName = ServerConfiguration.load(prefs, context.getSecretPrefs(), activeServerId)?.name
+            val activeServerName = prefs.activeServer.value?.name?.value
             title = getString(R.string.ui_on_server, title, activeServerName)
         }
     }

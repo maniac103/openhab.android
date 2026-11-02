@@ -16,42 +16,48 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import org.openhab.habdroid.R
-import org.openhab.habdroid.model.ServerConfiguration
 import org.openhab.habdroid.model.ServerPath
 import org.openhab.habdroid.util.getConnectionFactory
-import org.openhab.habdroid.util.getNextAvailableServerId
-import org.openhab.habdroid.util.getPrefs
-import org.openhab.habdroid.util.getSecretPrefs
-import org.openhab.habdroid.util.loadActiveServerConfig
+import org.openhab.habdroid.util.getPreferences
 
 /**
  * Entry point of the app on TV devices. The TV UI only supports sitemaps and is fully usable with a D-pad.
  */
 class TvMainActivity : ComponentActivity() {
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val activeServerFlow = getPreferences().activeServer.asFlow()
+        val serverPathFlow = activeServerFlow
+            .flatMapLatest { it?.localPath?.asFlow() ?: flowOf(null) }
+        val defaultSitemapFlow = activeServerFlow
+            .flatMapLatest { it?.defaultSitemap?.asFlow() ?: flowOf(null) }
+
         setContent {
             TvTheme {
-                var configVersion by remember { mutableIntStateOf(0) }
-                val serverConfig = remember(configVersion) {
-                    loadActiveServerConfig()
-                }
+                val serverPath by serverPathFlow.collectAsStateWithLifecycle(null)
+                val defaultSitemap by defaultSitemapFlow.collectAsStateWithLifecycle(null)
 
                 TvApp(
-                    config = serverConfig,
+                    serverPath = serverPath,
+                    defaultSitemap = defaultSitemap,
                     connectionProvider = { getConnectionFactory().currentActive?.conn?.connection },
                     onSaveServerPath = { path ->
-                        saveServer(path)
-                        configVersion++
+                        lifecycleScope.launch {
+                            saveServer(path)
+                        }
                     },
                     onSaveDefaultSitemap = { sitemap ->
-                        serverConfig?.id?.let { configId ->
-                            ServerConfiguration.saveDefaultSitemap(getPrefs(), configId, sitemap)
-                            configVersion++
+                        lifecycleScope.launch {
+                            getPreferences().activeServer.value?.defaultSitemap?.update(sitemap)
                         }
                     }
                 )
@@ -59,27 +65,13 @@ class TvMainActivity : ComponentActivity() {
         }
     }
 
-    private fun saveServer(path: ServerPath) {
-        val prefs = getPrefs()
-        val existing = loadActiveServerConfig()
-        val newConfig = if (existing != null) {
-            ServerConfiguration.createFrom(existing, localPath = path)
+    private suspend fun saveServer(path: ServerPath) {
+        val activeServer = getPreferences().activeServer.value
+        if (activeServer != null) {
+            activeServer.localPath.update(path)
         } else {
-            ServerConfiguration(
-                prefs.getNextAvailableServerId(),
-                getString(R.string.openhab),
-                path,
-                null,
-                null,
-                null,
-                null,
-                false,
-                null,
-                null
-            )
+            getPreferences().createServer(getString(R.string.openhab), path, null)
         }
-
-        newConfig.saveToPrefs(prefs, getSecretPrefs())
     }
 
     override fun onStart() {

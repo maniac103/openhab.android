@@ -17,8 +17,7 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import org.openhab.habdroid.ui.preference.PreferencesActivity
-import org.openhab.habdroid.util.getConfiguredServerIds
-import org.openhab.habdroid.util.getPrefs
+import org.openhab.habdroid.util.getPreferences
 
 /**
  * Opened by the Wear OS app via `openhab://wear-setup` to set up a server for the watch.
@@ -27,7 +26,7 @@ class WearSetupActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val startIntent = if (getPrefs().getConfiguredServerIds().isEmpty()) {
+        val startIntent = if (getPreferences().configuredServers.value.isEmpty()) {
             Intent(this, MainActivity::class.java)
         } else {
             Intent(this, PreferencesActivity::class.java).setAction(PreferencesActivity.ACTION_WEAR_SETUP)

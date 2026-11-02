@@ -13,13 +13,12 @@
 
 package org.openhab.habdroid.ui.activity
 
-import android.util.Log
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.openhab.habdroid.R
 import org.openhab.habdroid.core.connection.Connection
 import org.openhab.habdroid.ui.MainActivity
-import org.openhab.habdroid.util.loadActiveServerConfig
+import org.openhab.habdroid.util.getPreferences
 
 class FrontailWebViewFragment : AbstractWebViewFragment() {
     override val titleRes = R.string.mainmenu_openhab_frontail
@@ -32,7 +31,7 @@ class FrontailWebViewFragment : AbstractWebViewFragment() {
 
     override fun buildUrl(connection: Connection, url: String): HttpUrl {
         val connectionUrl = connection.httpClient.buildUrl(url)
-        val frontailUrl = context?.loadActiveServerConfig()?.frontailUrl?.toHttpUrlOrNull()
+        val frontailUrl = context?.getPreferences()?.activeServer?.value?.frontailUrl?.value?.toHttpUrlOrNull()
 
         return connectionUrl.newBuilder()
             .scheme(frontailUrl?.scheme ?: "http")

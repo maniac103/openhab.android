@@ -33,6 +33,7 @@ import androidx.preference.PreferenceManager
 import dev.spght.encryptedprefs.EncryptedSharedPreferences
 import dev.spght.encryptedprefs.MasterKey
 import org.openhab.habdroid.BuildConfig
+import org.openhab.habdroid.Preferences
 import org.openhab.habdroid.R
 import org.openhab.habdroid.background.BackgroundTasksManager
 import org.openhab.habdroid.core.connection.ConnectionFactory
@@ -63,6 +64,10 @@ class OpenHabApplication : Application() {
 
     val webViewManager: WebViewManager by lazy {
         WebViewManager(this)
+    }
+
+    val preferences: Preferences by lazy {
+        Preferences(getPrefs(), secretPrefs)
     }
 
     var systemDataSaverStatus: Int = ConnectivityManager.RESTRICT_BACKGROUND_STATUS_DISABLED

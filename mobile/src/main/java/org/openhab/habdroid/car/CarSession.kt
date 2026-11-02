@@ -24,8 +24,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import org.openhab.habdroid.Preferences
 import org.openhab.habdroid.R
-import org.openhab.habdroid.model.DefaultSitemap
 import org.openhab.habdroid.model.LinkedPage
 import org.openhab.habdroid.model.Sitemap
 import org.openhab.habdroid.model.Widget
@@ -35,7 +35,7 @@ import org.openhab.habdroid.util.onDestroy
 
 class CarSession(
     sitemapsFlow: Flow<Result<List<Sitemap>>?>,
-    defaultSitemapFlow: Flow<DefaultSitemap?>,
+    defaultSitemapFlow: Flow<Preferences.Server.DefaultSitemap?>,
     private val onPageListChanged: () -> Unit,
     private val onSendWidgetCommand: (widget: Widget, command: String, sourceId: String) -> Unit
 ) : Session() {

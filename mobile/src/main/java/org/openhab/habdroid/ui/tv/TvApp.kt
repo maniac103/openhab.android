@@ -21,9 +21,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.SurfaceDefaults
+import org.openhab.habdroid.Preferences
 import org.openhab.habdroid.core.connection.Connection
-import org.openhab.habdroid.model.DefaultSitemap
-import org.openhab.habdroid.model.ServerConfiguration
 import org.openhab.habdroid.model.ServerPath
 
 object TvRoutes {
@@ -35,13 +34,14 @@ object TvRoutes {
 
 @Composable
 fun TvApp(
-    config: ServerConfiguration?,
+    serverPath: ServerPath?,
+    defaultSitemap: Preferences.Server.DefaultSitemap?,
     connectionProvider: () -> Connection?,
     onSaveServerPath: (ServerPath) -> Unit,
-    onSaveDefaultSitemap: (DefaultSitemap) -> Unit
+    onSaveDefaultSitemap: (Preferences.Server.DefaultSitemap) -> Unit
 ) {
     val navController = rememberNavController()
-    val startDestination = if (config == null) TvRoutes.SETUP else TvRoutes.SITEMAP
+    val startDestination = if (serverPath == null) TvRoutes.SETUP else TvRoutes.SITEMAP
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -63,14 +63,14 @@ fun TvApp(
             }
             composable(TvRoutes.SITEMAP) {
                 TvSitemapScreen(
-                    config = config,
                     onSaveDefaultSitemap = onSaveDefaultSitemap,
                     onOpenSettings = { navController.navigate(TvRoutes.SETTINGS) }
                 )
             }
             composable(TvRoutes.SETTINGS) {
                 TvSettingsScreen(
-                    config = config,
+                    serverPath = serverPath,
+                    defaultSitemap = defaultSitemap,
                     connectionProvider = connectionProvider,
                     onSavePath = onSaveServerPath,
                     onSaveDefaultSitemap = onSaveDefaultSitemap,

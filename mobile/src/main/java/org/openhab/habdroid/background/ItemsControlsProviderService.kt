@@ -44,7 +44,6 @@ import kotlinx.coroutines.launch
 import org.openhab.habdroid.R
 import org.openhab.habdroid.core.connection.Connection
 import org.openhab.habdroid.model.Item
-import org.openhab.habdroid.model.ServerConfiguration
 import org.openhab.habdroid.model.toParsedState
 import org.openhab.habdroid.ui.ColorItemActivity
 import org.openhab.habdroid.ui.MainActivity
@@ -56,9 +55,8 @@ import org.openhab.habdroid.util.PendingIntent_Immutable
 import org.openhab.habdroid.util.PrefKeys
 import org.openhab.habdroid.util.getConnectionFactory
 import org.openhab.habdroid.util.getDeviceControlSubtitle
+import org.openhab.habdroid.util.getPreferences
 import org.openhab.habdroid.util.getPrefs
-import org.openhab.habdroid.util.getPrimaryServerId
-import org.openhab.habdroid.util.getSecretPrefs
 import org.openhab.habdroid.util.orDefaultIfEmpty
 
 @RequiresApi(Build.VERSION_CODES.R)
@@ -165,10 +163,9 @@ class ItemsControlsProviderService : ControlsProviderService() {
 
         init {
             val prefs = context.getPrefs()
-            primaryServerId = prefs.getPrimaryServerId()
-            serverName = ServerConfiguration.load(prefs, context.getSecretPrefs(), primaryServerId)
-                ?.name
-                .orDefaultIfEmpty(context.getString(R.string.app_name))
+            val primaryServer = context.getPreferences().primaryServer.value
+            primaryServerId = primaryServer?.id?.value ?: 0
+            serverName = primaryServer?.name?.value.orDefaultIfEmpty(context.getString(R.string.app_name))
             subtitleMode = prefs.getDeviceControlSubtitle(context)
             prefsAuthRequired = prefs.getBoolean(PrefKeys.DEVICE_CONTROL_AUTH_REQUIRED, true)
         }

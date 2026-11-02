@@ -50,25 +50,20 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.OutlinedButton
 import androidx.tv.material3.OutlinedIconButton
 import androidx.tv.material3.Text
+import org.openhab.habdroid.Preferences
 import org.openhab.habdroid.R
-import org.openhab.habdroid.model.DefaultSitemap
 import org.openhab.habdroid.model.Item
 import org.openhab.habdroid.model.LinkedPage
-import org.openhab.habdroid.model.ServerConfiguration
 import org.openhab.habdroid.model.Sitemap
 
 @Composable
 fun TvSitemapScreen(
-    config: ServerConfiguration?,
     onOpenSettings: () -> Unit,
-    onSaveDefaultSitemap: (DefaultSitemap) -> Unit,
+    onSaveDefaultSitemap: (Preferences.Server.DefaultSitemap) -> Unit,
     viewModel: TvSitemapViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    LaunchedEffect(config) {
-        viewModel.updateServerConfig(config)
-    }
     LifecycleStartEffect(viewModel) {
         viewModel.start()
         onStopOrDispose { viewModel.stop() }
@@ -110,7 +105,7 @@ fun TvSitemapScreen(
             SitemapSelection(
                 sitemaps = s.sitemaps,
                 onSelected = { sitemap ->
-                    onSaveDefaultSitemap(DefaultSitemap(sitemap.name, sitemap.label))
+                    onSaveDefaultSitemap(Preferences.Server.DefaultSitemap(sitemap.name, sitemap.label))
                     viewModel.selectSitemap(sitemap)
                 }
             )

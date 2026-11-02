@@ -29,15 +29,10 @@ import org.json.JSONException
 import org.openhab.habdroid.R
 import org.openhab.habdroid.databinding.FragmentNotificationlistBinding
 import org.openhab.habdroid.model.CloudMessage
-import org.openhab.habdroid.model.ServerConfiguration
 import org.openhab.habdroid.model.toCloudMessage
 import org.openhab.habdroid.util.HttpClient
-import org.openhab.habdroid.util.getActiveServerId
-import org.openhab.habdroid.util.getConfiguredServerIds
 import org.openhab.habdroid.util.getConnectionFactory
-import org.openhab.habdroid.util.getPrefs
-import org.openhab.habdroid.util.getPrimaryServerId
-import org.openhab.habdroid.util.getSecretPrefs
+import org.openhab.habdroid.util.getPreferences
 import org.openhab.habdroid.util.map
 
 /**
@@ -175,11 +170,11 @@ class CloudNotificationListFragment : Fragment() {
     private fun usePrimaryServer() = requireArguments().getBoolean("primary")
 
     fun getTitle(context: Context): String {
-        val prefs = context.getPrefs()
+        val prefs = context.getPreferences()
         var title = context.getString(R.string.app_notifications)
-        if (prefs.getConfiguredServerIds().size > 1) {
-            val serverId = if (usePrimaryServer()) prefs.getPrimaryServerId() else prefs.getActiveServerId()
-            val serverName = ServerConfiguration.load(prefs, context.getSecretPrefs(), serverId)?.name
+        if (prefs.configuredServers.value.size > 1) {
+            val server = if (usePrimaryServer()) prefs.primaryServer.value else prefs.activeServer.value
+            val serverName = server?.name?.value
             title = context.getString(R.string.ui_on_server, title, serverName)
         }
 

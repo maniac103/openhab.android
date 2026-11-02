@@ -76,11 +76,14 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -133,13 +136,13 @@ import org.openhab.habdroid.util.areSitemapsShownInDrawer
 import org.openhab.habdroid.util.determineDataUsagePolicy
 import org.openhab.habdroid.util.getActiveServerId
 import org.openhab.habdroid.util.getBackgroundTasksManager
-import org.openhab.habdroid.util.getConfiguredServerIds
 import org.openhab.habdroid.util.getConnectionFactory
 import org.openhab.habdroid.util.getCurrentWifiSsid
 import org.openhab.habdroid.util.getDefaultSitemap
 import org.openhab.habdroid.util.getGroupItems
 import org.openhab.habdroid.util.getHumanReadableErrorMessage
 import org.openhab.habdroid.util.getIconFallbackColor
+import org.openhab.habdroid.util.getPreferences
 import org.openhab.habdroid.util.getPrefs
 import org.openhab.habdroid.util.getPrimaryServerId
 import org.openhab.habdroid.util.getRemoteUrl
@@ -175,6 +178,7 @@ class MainActivity : AbstractBaseActivity() {
     private var lastActiveConnectionResult: ConnectionFactory.ConnectionResult? = null
     private var lastActiveCloudConnectionResult: ConnectionFactory.CloudConnectionResult? = null
     private var lastPrimaryCloudConnectionResult: ConnectionFactory.CloudConnectionResult? = null
+    private var activeServerName: String? = null
 
     private var pendingAction: PendingAction? = null
     private lateinit var controller: ContentController
@@ -220,6 +224,7 @@ class MainActivity : AbstractBaseActivity() {
         processIntent(intent)
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         CrashReportingHelper.d(TAG, "onCreate()")
 
@@ -357,6 +362,17 @@ class MainActivity : AbstractBaseActivity() {
                         showPushNotificationWarningIfNeeded()
                     }
                 }
+            }
+        }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                getPreferences().activeServer.asFlow()
+                    .flatMapLatest { server -> server?.name?.asFlow() ?: flowOf(null) }
+                    .collectLatest {
+                        activeServerName = it
+                        updateTitle()
+                        updateServerNameInDrawer()
+                    }
             }
         }
     }
@@ -612,9 +628,9 @@ class MainActivity : AbstractBaseActivity() {
             }
 
             failureReason is WrongWifiException -> {
-                val activeConfig = ServerConfiguration.load(prefs, getSecretPrefs(), prefs.getActiveServerId())
-                val ssids = activeConfig?.wifiSsids?.joinToString(", ")
-                controller.indicateWrongWifi(getString(R.string.error_wifi_restricted, activeConfig?.name, ssids))
+                val activeServer = getPreferences().activeServer.value
+                val ssids = activeServer?.wifiSsids?.value?.joinToString(", ")
+                controller.indicateWrongWifi(getString(R.string.error_wifi_restricted, activeServer?.name?.value, ssids))
             }
 
             failureReason is NoUrlInformationException -> {
@@ -687,17 +703,13 @@ class MainActivity : AbstractBaseActivity() {
      * the server id otherwise.
      */
     private fun determineServerIdToSwitchToBasedOnWifi(ssid: String?, prevSsid: String?): Int {
-        val allServers = prefs
-            .getConfiguredServerIds()
-            .map { id -> ServerConfiguration.load(prefs, getSecretPrefs(), id) }
-
-        val anyServerHasSetWifi = allServers
-            .any { config -> config?.wifiSsids?.isNotEmpty() == true }
+        val allServers = getPreferences().configuredServers.value
+        val anyServerHasSetWifi = allServers.any { server -> server.wifiSsids.value?.isNotEmpty() == true }
 
         val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         val requiredPermissions = when {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> {
-                val anyServerIsRestrictedToWifi = allServers.any { config -> config?.restrictToWifiSsids == true }
+                val anyServerIsRestrictedToWifi = allServers.any { server -> server.restrictToWifiSsids.value }
                 if (anyServerIsRestrictedToWifi) {
                     arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
                 } else {
@@ -749,18 +761,19 @@ class MainActivity : AbstractBaseActivity() {
             }
         }
 
-        val serverForCurrentWifi = prefs
-            .getConfiguredServerIds()
-            .map { id -> ServerConfiguration.load(prefs, getSecretPrefs(), id) }
-            .firstOrNull { config -> config?.wifiSsids?.contains(ssid) == true }
+        val serverIdForCurrentWifi = getPreferences()
+            .configuredServers.value
+            .firstOrNull { server -> server.wifiSsids.value?.contains(ssid) == true }
+            ?.id
+            ?.value
             ?: return -1
 
         val currentActive = prefs.getActiveServerId()
-        if (serverForCurrentWifi.id == currentActive) {
+        if (serverIdForCurrentWifi == currentActive) {
             Log.d(TAG, "Server for current wifi already active")
             return -1
         }
-        return serverForCurrentWifi.id
+        return serverIdForCurrentWifi
     }
 
     private fun switchServerBasedOnWifi(serverId: Int) {
@@ -903,8 +916,11 @@ class MainActivity : AbstractBaseActivity() {
     }
 
     private fun handleServiceResolveResult(info: ServiceInfo?) {
-        if (info != null && prefs.getConfiguredServerIds().isEmpty()) {
-            info.addToPrefs(this)
+        val prefs = getPreferences()
+        if (info != null && prefs.configuredServers.value.isEmpty()) {
+            lifecycleScope.launch {
+                info.addToPrefs(this@MainActivity)
+            }
         } else {
             Log.d(TAG, "Failed to discover openHAB server")
             controller.indicateMissingConfiguration(resolveAttempted = true, wouldHaveUsedOfficialServer = false)
@@ -1158,10 +1174,11 @@ class MainActivity : AbstractBaseActivity() {
         if (connection is DemoConnection) {
             drawerHeaderBinding.drawerModeSwitcher.isGone = true
         } else {
-            val configs = prefs.getConfiguredServerIds()
-                .mapNotNull { id -> ServerConfiguration.load(prefs, getSecretPrefs(), id) }
-            configs.forEachIndexed { index, config -> drawerMenu.add(R.id.servers, config.id, index, config.name) }
-            drawerHeaderBinding.drawerModeSwitcher.isGone = configs.size <= 1
+            val servers = getPreferences().configuredServers.value
+            servers.forEachIndexed { index, server ->
+                drawerMenu.add(R.id.servers, server.id.value, index, server.name.value)
+            }
+            drawerHeaderBinding.drawerModeSwitcher.isGone = servers.size <= 1
         }
         drawerHeaderBinding.serverNameLabel.isGone = drawerHeaderBinding.drawerModeSwitcher.isGone
         drawerHeaderBinding.serverSelector.isClickable = drawerHeaderBinding.drawerModeSwitcher.isVisible
@@ -1212,8 +1229,7 @@ class MainActivity : AbstractBaseActivity() {
         if (connection is DemoConnection) {
             drawerHeaderBinding.serverName.text = getString(R.string.settings_openhab_demomode)
         } else {
-            val activeConfig = ServerConfiguration.load(prefs, getSecretPrefs(), prefs.getActiveServerId())
-            drawerHeaderBinding.serverName.text = activeConfig?.name
+            drawerHeaderBinding.serverName.text = activeServerName
         }
     }
 
@@ -1367,7 +1383,7 @@ class MainActivity : AbstractBaseActivity() {
     }
 
     private fun executeActionForServer(serverId: Int, action: () -> Unit): Boolean = when {
-        serverId !in prefs.getConfiguredServerIds() -> {
+        getPreferences().configuredServers.value.none { it.id.value == serverId } -> {
             showSnackbar(
                 SNACKBAR_TAG_SERVER_MISSING,
                 R.string.home_shortcut_server_has_been_deleted
@@ -1462,7 +1478,6 @@ class MainActivity : AbstractBaseActivity() {
 
     fun updateTitle() {
         val title = controller.currentTitle
-        val activeServerName = ServerConfiguration.load(prefs, getSecretPrefs(), prefs.getActiveServerId())?.name
         setTitle(title.orDefaultIfEmpty(activeServerName.orEmpty()).orDefaultIfEmpty(getString(R.string.app_name)))
         drawerToggle.isDrawerIndicatorEnabled = !controller.canGoBack()
         updateBackPressedCallbackState()
