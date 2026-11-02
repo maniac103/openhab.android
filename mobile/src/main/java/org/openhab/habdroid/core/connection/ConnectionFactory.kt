@@ -46,6 +46,7 @@ import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.logging.HttpLoggingInterceptor
 import org.openhab.habdroid.core.CloudMessagingHelper
 import org.openhab.habdroid.model.ServerConfiguration
+import org.openhab.habdroid.model.ServerPath
 import org.openhab.habdroid.util.CacheManager
 import org.openhab.habdroid.util.PrefKeys
 import org.openhab.habdroid.util.getActiveServerId
@@ -80,7 +81,13 @@ class ConnectionFactory internal constructor(
     private var pendingChecks = mutableListOf<Job>()
     private var subscriptionCount = 0
 
-    private data class ServerConnections(val local: Connection?, val remote: AbstractConnection?)
+    private data class ServerConnections(
+        val serverId: Int?,
+        val local: Connection?,
+        val localPath: ServerPath?,
+        val remote: AbstractConnection?,
+        val remotePath: ServerPath?
+    )
 
     data class ConnectionResult(val connection: Connection?, val failureReason: ConnectionException?)
 
@@ -89,6 +96,8 @@ class ConnectionFactory internal constructor(
     data class CloudConnectionResult(val connection: CloudConnection?, val failureReason: Exception?)
 
     data class ConnectionInfo(
+        val serverId: Int?,
+        val path: ServerPath?,
         val conn: ConnectionResult?,
         val cloud: CloudConnectionResult?,
         val hasLocal: Boolean,
@@ -123,6 +132,12 @@ class ConnectionFactory internal constructor(
         fun toPrimaryConnectionInfo() = toInfo(primary, primaryCloud)
 
         private fun toInfo(conn: ConnectionResultWithSource?, cloud: CloudConnectionResult?) = ConnectionInfo(
+            conn?.connections?.serverId,
+            when (conn?.result?.connection) {
+                conn?.connections?.local -> conn?.connections?.localPath
+                conn?.connections?.remote -> conn?.connections?.remotePath
+                else -> null
+            },
             conn?.result,
             cloud,
             conn?.connections?.local != null,
@@ -264,7 +279,7 @@ class ConnectionFactory internal constructor(
                 return
             }
             val conn = DemoConnection(httpClient)
-            activeConn = ServerConnections(conn, conn)
+            activeConn = ServerConnections(null, conn, null, conn, null)
             primaryConn = activeConn
             val connResult = ConnectionResultWithSource(ConnectionResult(conn, null), activeConn)
             val cloudResult = CloudConnectionResult(null, null)
@@ -289,7 +304,7 @@ class ConnectionFactory internal constructor(
         val config = ServerConfiguration.load(prefs, secretPrefs, serverId) ?: return null
         val local = config.localPath?.let { path -> DefaultConnection(httpClient, Connection.TYPE_LOCAL, path) }
         val remote = config.remotePath?.let { path -> DefaultConnection(httpClient, Connection.TYPE_REMOTE, path) }
-        return ServerConnections(local, remote)
+        return ServerConnections(serverId, local, config.localPath, remote, config.remotePath)
     }
 
     private fun updateHttpLoggerSettings() {

@@ -78,7 +78,6 @@ class TvSitemapViewModel(application: Application) :
     private var sitemap: Sitemap? = null
     private val pageStack = mutableListOf<String>()
     private val pages = mutableMapOf<String, PageData>()
-    private var lastKnownServerPath: ServerPath? = null
     private var defaultSitemap: Preferences.Server.DefaultSitemap? = null
 
     private val _state = MutableStateFlow<State>(State.Loading)
@@ -92,14 +91,9 @@ class TvSitemapViewModel(application: Application) :
     init {
         repository.setCallback(this)
         viewModelScope.launch {
-            context.getConnectionFactory().activeFlow.collectLatest { info -> onConnectionChanged(info.conn) }
-        }
-        viewModelScope.launch {
-            context.getPreferences().activeServer.asFlow()
-                .flatMapLatest { it?.localPath?.asFlow() ?: flowOf(null) }
-                .collectLatest {
-                    lastKnownServerPath = it
-                }
+            context.getConnectionFactory().activeFlow.collectLatest { info ->
+                onConnectionChanged(info.conn, info.path)
+            }
         }
         viewModelScope.launch {
             context.getPreferences().activeServer.asFlow()
@@ -138,7 +132,7 @@ class TvSitemapViewModel(application: Application) :
             conn == null -> context.getConnectionFactory().restartNetworkCheck()
 
             serverProperties == null -> viewModelScope.launch {
-                onConnectionChanged(ConnectionFactory.ConnectionResult(conn, null))
+                onConnectionChanged(ConnectionFactory.ConnectionResult(conn, null), null)
             }
 
             else -> {
@@ -170,7 +164,7 @@ class TvSitemapViewModel(application: Application) :
         connection?.httpClient?.sendItemCommand(item, command, buildSourceId())
     }
 
-    private suspend fun onConnectionChanged(result: ConnectionFactory.ConnectionResult?) {
+    private suspend fun onConnectionChanged(result: ConnectionFactory.ConnectionResult?, path: ServerPath?) {
         Log.d(TAG, "onConnectionChanged($result)")
         val conn = result?.connection
         // Forget everything loaded from the previous connection
@@ -182,8 +176,7 @@ class TvSitemapViewModel(application: Application) :
         repository.updateActiveConnections(emptyList(), conn)
 
         if (conn == null) {
-            val url = lastKnownServerPath?.url
-            _state.value = State.Error(context.getString(R.string.tv_error_connection_failed, url.orEmpty()))
+            _state.value = State.Error(context.getString(R.string.tv_error_connection_failed, path?.url.orEmpty()))
             return
         }
 
@@ -210,7 +203,7 @@ class TvSitemapViewModel(application: Application) :
             selectedSitemap != null -> showSitemap(selectedSitemap)
 
             sitemaps.isEmpty() -> {
-                _state.value = State.NoSitemaps(lastKnownServerPath?.url)
+                _state.value = State.NoSitemaps(path?.url)
             }
 
             // Let the user choose instead of picking one of multiple sitemaps
